@@ -10,6 +10,7 @@ export const resources = pgTable("resources", {
     .primaryKey()
     .$defaultFn(() => nanoid()),
   content: text("content").notNull(),
+  category: varchar("category", { length: 255 }),
 
   createdAt: timestamp("created_at")
     .notNull()
@@ -21,7 +22,9 @@ export const resources = pgTable("resources", {
 
 // Schema for resources - used to validate API requests
 export const insertResourceSchema = createSelectSchema(resources)
-  .extend({})
+  .extend({
+    category: z.string().optional(),
+  })
   .omit({
     id: true,
     createdAt: true,
