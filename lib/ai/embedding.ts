@@ -142,3 +142,41 @@ export const getFullDocument = async (resourceId: string) => {
     chunkCount: chunks.length
   };
 };
+
+export const findDocumentByUrl = async (url: string) => {
+  try {
+    // Parse URL and extract path
+    const urlObj = new URL(url);
+    const path = urlObj.pathname;
+
+    // Search for documents where sourceUrl contains the path
+    const result = await db
+      .select({
+        id: resources.id,
+        title: resources.sourceTitle,
+        content: resources.content,
+        url: resources.sourceUrl
+      })
+      .from(resources)
+      .where(sql`${resources.sourceUrl} LIKE ${`%${path}%`}`)
+      .limit(1);
+
+    if (result.length === 0) {
+      return null;
+    }
+
+    const doc = result[0];
+    // Return title + first 400 chars
+    const preview = doc.content.substring(0, 400);
+
+    return {
+      resourceId: doc.id,
+      title: doc.title || 'Current Document',
+      preview,
+      url: doc.url
+    };
+  } catch (error) {
+    console.error('Error finding document by URL:', error);
+    return null;
+  }
+};

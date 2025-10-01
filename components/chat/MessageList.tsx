@@ -7,7 +7,15 @@ import { CodeBlock, CodeBlockCopyButton } from "@/components/ai-elements/code-bl
 import { Sources, SourcesTrigger, SourcesContent, Source } from "@/components/ai-elements/sources";
 import { Response } from "@/components/ai-elements/response";
 import { Actions, Action } from "@/components/ai-elements/actions";
-import { ThumbsUp, ThumbsDown } from "lucide-react";
+import {
+  ChainOfThought,
+  ChainOfThoughtContent,
+  ChainOfThoughtHeader,
+  ChainOfThoughtStep,
+  ChainOfThoughtSearchResults,
+  ChainOfThoughtSearchResult,
+} from "@/components/ai-elements/chain-of-thought";
+import { ThumbsUp, ThumbsDown, Copy, SearchIcon, BookOpenIcon } from "lucide-react";
 import { toast } from "sonner";
 
 interface MessageListProps {
@@ -103,26 +111,39 @@ const MessageBubble = ({ message, allMessages }: { message: any; allMessages: an
                       </Response>
                     )}
                   </div>
-                  {!isUser && !feedbackGiven && (
+                  {!isUser && (
                     <Actions className="ml-2">
                       <Action
-                        tooltip="Good response"
-                        onClick={() => handleFeedback('positive')}
-                        className="text-[#64748b] hover:text-[#22c55e] hover:bg-[#1a1a1a]"
+                        tooltip="Copy message"
+                        onClick={() => {
+                          navigator.clipboard.writeText(part.text);
+                          toast.success('Copied to clipboard!');
+                        }}
+                        className="text-[#64748b] hover:text-[#94a3b8] hover:bg-[#1a1a1a]"
                       >
-                        <ThumbsUp className="h-4 w-4" />
+                        <Copy className="h-4 w-4" />
                       </Action>
-                      <Action
-                        tooltip="Bad response"
-                        onClick={() => handleFeedback('negative')}
-                        className="text-[#64748b] hover:text-[#ef4444] hover:bg-[#1a1a1a]"
-                      >
-                        <ThumbsDown className="h-4 w-4" />
-                      </Action>
+                      {!feedbackGiven ? (
+                        <>
+                          <Action
+                            tooltip="Good response"
+                            onClick={() => handleFeedback('positive')}
+                            className="text-[#64748b] hover:text-[#22c55e] hover:bg-[#1a1a1a]"
+                          >
+                            <ThumbsUp className="h-4 w-4" />
+                          </Action>
+                          <Action
+                            tooltip="Bad response"
+                            onClick={() => handleFeedback('negative')}
+                            className="text-[#64748b] hover:text-[#ef4444] hover:bg-[#1a1a1a]"
+                          >
+                            <ThumbsDown className="h-4 w-4" />
+                          </Action>
+                        </>
+                      ) : (
+                        <div className="text-xs text-[#64748b] ml-1">Thanks for your feedback!</div>
+                      )}
                     </Actions>
-                  )}
-                  {!isUser && feedbackGiven && (
-                    <div className="text-xs text-[#64748b] ml-2">Thanks for your feedback!</div>
                   )}
                 </div>
               </motion.div>
@@ -139,6 +160,7 @@ const MessageBubble = ({ message, allMessages }: { message: any; allMessages: an
           case 'tool-addResource':
           case 'tool-getInformation':
           case 'tool-knowledgeSearch':
+          case 'tool-getFullDocument':
             return <ToolInvocationPart key={index} part={part} />;
 
           case 'tool-understandQuery':
@@ -208,6 +230,8 @@ const ToolInvocationPart = ({ part }: { part: any }) => {
         return 'Understanding query';
       case 'tool-knowledgeSearch':
         return 'Searching documents';
+      case 'tool-getFullDocument':
+        return 'Reading documentation';
       default:
         return 'Processing';
     }
@@ -276,14 +300,10 @@ const ToolInvocationPart = ({ part }: { part: any }) => {
 
     case 'output-available':
       const isSearchTool = part.type === 'tool-knowledgeSearch' || part.type === 'tool-getInformation';
+      const isDocumentTool = part.type === 'tool-getFullDocument';
       const searchQuery = part.input?.question || part.input?.similarQuestions?.[0];
+      const documentTitle = part.input?.title;
       const timeTaken = elapsedTime > 0 ? `${elapsedTime}s` : '';
-
-      // Extract sources from result if available
-      console.log('🔍 Full part object:', part);
-      console.log('🔍 Tool result:', part.result);
-      console.log('🔍 Tool output:', part.output);
-      console.log('🔍 Tool type:', part.type);
 
       const toolData = part.result || part.output;
       const sources = toolData && Array.isArray(toolData)
@@ -301,42 +321,53 @@ const ToolInvocationPart = ({ part }: { part: any }) => {
       console.log('✅ Extracted sources:', sources);
 
       return (
-        <>
-          <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex justify-start"
-          >
-            <div className="flex items-center gap-2 bg-[#0f0f10] border border-[#262626] rounded-full px-3 py-1.5">
-              <svg className="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span className="text-[#94a3b8] text-xs font-medium">
-                {isSearchTool && searchQuery ? (
-                  <>found results for "{searchQuery}" {timeTaken && <span className="text-[#64748b]">({timeTaken})</span>}</>
-                ) : (
-                  <>{getToolLabel(part.type)} complete {timeTaken && <span className="text-[#64748b]">({timeTaken})</span>}</>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex justify-start"
+        >
+          <ChainOfThought defaultOpen={false} className="max-w-[80%]">
+            <ChainOfThoughtHeader>
+              {isSearchTool && searchQuery ? `Search: "${searchQuery}"` : isDocumentTool && documentTitle ? `Reading documentation...` : 'Tool execution'}
+            </ChainOfThoughtHeader>
+            <ChainOfThoughtContent>
+              <ChainOfThoughtStep
+                icon={isSearchTool ? SearchIcon : isDocumentTool ? BookOpenIcon : undefined}
+                label={isSearchTool ? `Found ${sources.length} results` : isDocumentTool ? `Explored page: ${documentTitle}` : 'Completed'}
+                description={timeTaken ? `Completed in ${timeTaken}` : undefined}
+                status="complete"
+              >
+                {sources.length > 0 && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {sources.map((source: any, idx: number) => {
+                      const domain = new URL(source.url).hostname;
+                      const logoUrl = `https://img.logo.dev/${domain}?token=pk_WvmDV4TyQzGbpcnwL6tImw`;
+                      return (
+                        <a
+                          key={idx}
+                          href={source.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 dark:border-zinc-800 dark:focus:ring-zinc-300 border-transparent bg-zinc-100 text-zinc-900 hover:bg-zinc-100/80 dark:bg-zinc-800 dark:text-zinc-50 dark:hover:bg-zinc-800/80 gap-1 px-2 py-0.5 font-normal text-xs"
+                        >
+                          <img
+                            src={logoUrl}
+                            alt=""
+                            className="size-4"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                          {source.title}
+                        </a>
+                      );
+                    })}
+                  </div>
                 )}
-              </span>
-            </div>
-          </motion.div>
-          {sources.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex justify-start mt-2"
-            >
-              <Sources className="max-w-[80%]">
-                <SourcesTrigger count={sources.length} />
-                <SourcesContent>
-                  {sources.map((source: any, idx: number) => (
-                    <Source key={idx} href={source.url} title={source.title} />
-                  ))}
-                </SourcesContent>
-              </Sources>
-            </motion.div>
-          )}
-        </>
+              </ChainOfThoughtStep>
+            </ChainOfThoughtContent>
+          </ChainOfThought>
+        </motion.div>
       );
 
     case 'output-error':

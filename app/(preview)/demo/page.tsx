@@ -166,7 +166,7 @@ export default function DemoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0b] text-[#f8fafc]">
+    <div className="dark min-h-screen bg-[#0a0a0b] text-[#f8fafc]">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-[#0a0a0b] border-b border-[#1a1a1b]">
         <div className="flex items-center justify-between px-4 py-3">

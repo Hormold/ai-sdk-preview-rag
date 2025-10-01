@@ -15,21 +15,38 @@ interface ChatProps {
 
 export default function Chat({ onClose }: ChatProps = {}) {
   const [input, setInput] = useState<string>("");
-  const [model, setModel] = useState<"gpt-5" | "gpt-5-mini">("gpt-5-mini");
+  const [model, setModel] = useState<"low" | "high">("low");
   const [reasoningEffort, setReasoningEffort] = useState<"low" | "medium" | "high">("low");
-  const [currentUrl, setCurrentUrl] = useState<string>("");
   const [categories, setCategories] = useState<Array<{ name: string; count: number }>>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Map frontend model names to API model names
-  const apiModel = model === "gpt-5" ? "high" : "low";
+  const modelRef = useRef(model);
+  const effortRef = useRef(reasoningEffort);
+  const categoriesRef = useRef(selectedCategories);
 
-  const { messages, sendMessage, status, setMessages } = useChat({
+  useEffect(() => {
+    modelRef.current = model;
+  }, [model]);
+
+  useEffect(() => {
+    effortRef.current = reasoningEffort;
+  }, [reasoningEffort]);
+
+  useEffect(() => {
+    categoriesRef.current = selectedCategories;
+  }, [selectedCategories]);
+
+  const { messages, sendMessage, status, setMessages, stop } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/chat',
-      body: { model: apiModel, currentUrl, selectedCategories, effort: reasoningEffort },
+      body: () => ({
+        model: modelRef.current,
+        currentUrl: window.location.href,
+        selectedCategories: categoriesRef.current,
+        effort: effortRef.current,
+      }),
     }),
     onData: (data) => {
       setError(null);
@@ -42,7 +59,6 @@ export default function Chat({ onClose }: ChatProps = {}) {
 
   // Load messages and categories from localStorage on mount
   useEffect(() => {
-    setCurrentUrl(window.location.href);
 
     const saved = localStorage.getItem("chat-messages");
     if (saved) {
@@ -64,7 +80,7 @@ export default function Chat({ onClose }: ChatProps = {}) {
 
     const savedModel = localStorage.getItem("chat-model");
     if (savedModel) {
-      setModel(savedModel as "gpt-5" | "gpt-5-mini");
+      setModel(savedModel as "low" | "high");
     }
 
     const savedEffort = localStorage.getItem("chat-reasoning-effort");
@@ -164,7 +180,9 @@ export default function Chat({ onClose }: ChatProps = {}) {
           value={input}
           onChange={setInput}
           onSubmit={handleSubmit}
+          onStop={stop}
           disabled={status === "submitted"}
+          isStreaming={status === "streaming"}
         />
       </div>
     </div>

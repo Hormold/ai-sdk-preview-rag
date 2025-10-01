@@ -6,10 +6,12 @@ interface ChatInputProps {
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
+  onStop?: () => void;
   disabled: boolean;
+  isStreaming?: boolean;
 }
 
-export function ChatInput({ value, onChange, onSubmit, disabled }: ChatInputProps) {
+export function ChatInput({ value, onChange, onSubmit, onStop, disabled, isStreaming }: ChatInputProps) {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!value.trim()) return;
@@ -25,14 +27,25 @@ export function ChatInput({ value, onChange, onSubmit, disabled }: ChatInputProp
         value={value}
         placeholder="Ask me anything..."
         onChange={(e) => onChange(e.target.value)}
+        disabled={isStreaming}
       />
-      <button
-        type="submit"
-        disabled={!value.trim() || disabled}
-        className="px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] disabled:bg-[#1e293b] disabled:text-[#64748b] text-white rounded-md transition-colors font-medium"
-      >
-        Send
-      </button>
+      {isStreaming ? (
+        <button
+          type="button"
+          onClick={onStop}
+          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors font-medium"
+        >
+          Stop
+        </button>
+      ) : (
+        <button
+          type="submit"
+          disabled={!value.trim() || disabled}
+          className="px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] disabled:bg-[#1e293b] disabled:text-[#64748b] text-white rounded-md transition-colors font-medium"
+        >
+          Send
+        </button>
+      )}
     </form>
   );
 }

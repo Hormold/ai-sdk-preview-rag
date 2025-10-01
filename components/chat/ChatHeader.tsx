@@ -6,9 +6,9 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface ChatHeaderProps {
-  model: "gpt-5" | "gpt-5-mini";
+  model: "low" | "high";
   reasoningEffort: "low" | "medium" | "high";
-  onModelChange: (model: "gpt-5" | "gpt-5-mini") => void;
+  onModelChange: (model: "low" | "high") => void;
   onReasoningChange: (effort: "low" | "medium" | "high") => void;
   onClear: () => void;
   onClose?: () => void;
@@ -83,26 +83,26 @@ export function ChatHeader({
                 <div className="text-[#999999] text-xs font-medium mb-2">Model</div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => onModelChange("gpt-5")}
+                    onClick={() => onModelChange("high")}
                     className={cn(
                       "flex-1 px-3 py-2 rounded-md text-xs font-medium transition-colors outline-none focus:outline-none border",
-                      model === "gpt-5"
+                      model === "high"
                         ? "bg-[#2563eb] text-white border-[#2563eb]"
                         : "bg-[#1a1a1a] text-[#999999] hover:bg-[#2a2a2a] border-[#2a2a2a]"
                     )}
                   >
-                    GPT-5
+                    Smart
                   </button>
                   <button
-                    onClick={() => onModelChange("gpt-5-mini")}
+                    onClick={() => onModelChange("low")}
                     className={cn(
                       "flex-1 px-3 py-2 rounded-md text-xs font-medium transition-colors outline-none focus:outline-none border",
-                      model === "gpt-5-mini"
+                      model === "low"
                         ? "bg-[#2563eb] text-white border-[#2563eb]"
                         : "bg-[#1a1a1a] text-[#999999] hover:bg-[#2a2a2a] border-[#2a2a2a]"
                     )}
                   >
-                    GPT-5 mini
+                    Fast
                   </button>
                 </div>
               </div>
