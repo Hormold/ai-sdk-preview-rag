@@ -4,7 +4,7 @@ import { embeddings as embeddingsTable } from "../db/schema/embeddings";
 import { resources } from "../db/schema/resources";
 
 // Simple in-memory cache to avoid re-downloading files
-const downloadedContent = new Map<string, string>();
+const downloadedContent = new Map<string, { content: string; title?: string }>();
 // Track processed URLs to avoid infinite loops
 const processedUrls = new Set<string>();
 // Queue of URLs to process
@@ -32,10 +32,10 @@ export class LiveKitDocsIndexer {
       console.log("🧹 Database cleaned up");
 
       // 1. Fetch llms.txt and extract initial links
-      const llmsContent = await this.fetchWithRetry(`${this.baseUrl}/llms.txt`);
+      const llmsResult = await this.fetchWithRetry(`${this.baseUrl}/llms.txt`);
       console.log("✅ Fetched llms.txt");
 
-      const initialLinks = this.extractMdLinks(llmsContent);
+      const initialLinks = this.extractMdLinks(llmsResult.content);
       console.log(`📋 Found ${initialLinks.length} initial .md files to index`);
 
       // 2. Add initial links to queue
@@ -77,7 +77,7 @@ export class LiveKitDocsIndexer {
     return [...links];
   }
 
-  private async fetchWithRetry(url: string, retries = this.maxRetries): Promise<string> {
+  private async fetchWithRetry(url: string, retries = this.maxRetries): Promise<{ content: string; title?: string }> {
     for (let i = 0; i < retries; i++) {
       try {
         const response = await fetch(url);
@@ -93,13 +93,15 @@ export class LiveKitDocsIndexer {
           }
 
           const html = await htmlResponse.text();
-          return this.stripHtmlTags(html);
+          const { content, title } = this.stripHtmlTags(html);
+          return { content, title };
         }
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-        return await response.text();
+        const content = await response.text();
+        return { content };
       } catch (error) {
         if (i === retries - 1) throw error;
         console.log(`Retry ${i + 1}/${retries} for ${url}`);
@@ -109,9 +111,13 @@ export class LiveKitDocsIndexer {
     throw new Error(`Failed to fetch ${url} after ${retries} retries`);
   }
 
-  private stripHtmlTags(html: string): string {
-    // Extract content from #main-content div
-    const mainContentMatch = html.match(/<div[^>]*id=["']main-content["'][^>]*>([\s\S]*?)<\/div>/i);
+  private stripHtmlTags(html: string): { content: string; title: string } {
+    // Extract title from <title> tag
+    const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+    const pageTitle = titleMatch ? titleMatch[1].trim().replace(' | LiveKit Docs', '') : '';
+
+    // Extract content from <main> tag
+    const mainContentMatch = html.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
     let content = mainContentMatch ? mainContentMatch[1] : html;
 
     // Remove script and style tags with their content
@@ -132,26 +138,27 @@ export class LiveKitDocsIndexer {
     // Clean up whitespace
     content = content.replace(/\s+/g, ' ').trim();
 
-    return content;
+    return { content, title: pageTitle };
   }
 
   private async processMdFile(url: string): Promise<ParsedMarkdown | null> {
     try {
       // Check cache first
       if (downloadedContent.has(url)) {
-        return this.parseMarkdown(url, downloadedContent.get(url)!);
+        const cached = downloadedContent.get(url)!;
+        return this.parseMarkdown(url, cached.content, cached.title);
       }
 
       // Download content
-      const content = await this.fetchWithRetry(url);
+      const fetchResult = await this.fetchWithRetry(url);
 
       // Cache the content
-      downloadedContent.set(url, content);
+      downloadedContent.set(url, fetchResult);
 
-      const parsedMarkdown = this.parseMarkdown(url, content);
+      const parsedMarkdown = this.parseMarkdown(url, fetchResult.content, fetchResult.title);
 
       // Extract new links from the content and add to queue
-      const newLinks = this.extractMdLinks(content);
+      const newLinks = this.extractMdLinks(fetchResult.content);
       for (const link of newLinks) {
         if (!processedUrls.has(link) && !urlQueue.includes(link)) {
           urlQueue.push(link);
@@ -166,14 +173,17 @@ export class LiveKitDocsIndexer {
     }
   }
 
-  private parseMarkdown(url: string, content: string): ParsedMarkdown {
+  private parseMarkdown(url: string, content: string, htmlTitle?: string): ParsedMarkdown {
     // Extract category from breadcrumb (first meaningful part after "LiveKit Docs ›")
     const breadcrumbMatch = content.match(/LiveKit Docs › ([^›]+) ›/);
     const category = breadcrumbMatch ? breadcrumbMatch[1].trim() : "General";
 
-    // Extract title (usually the first heading or the URL path)
-    const titleMatch = content.match(/# ([^\n]+)/);
-    const title = titleMatch ? titleMatch[1].trim() : this.extractTitleFromUrl(url);
+    // Use HTML title if available, otherwise extract from markdown or URL
+    let title = htmlTitle || '';
+    if (!title) {
+      const titleMatch = content.match(/# ([^\n]+)/);
+      title = titleMatch ? titleMatch[1].trim() : this.extractTitleFromUrl(url);
+    }
 
     // Clean up content - remove frontmatter and excessive whitespace
     let cleanedContent = content

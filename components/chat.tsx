@@ -20,6 +20,7 @@ export default function Chat({ onClose }: ChatProps = {}) {
   const [currentUrl, setCurrentUrl] = useState<string>("");
   const [categories, setCategories] = useState<Array<{ name: string; count: number }>>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Map frontend model names to API model names
@@ -30,8 +31,12 @@ export default function Chat({ onClose }: ChatProps = {}) {
       api: '/api/chat',
       body: { model: apiModel, currentUrl, selectedCategories, effort: reasoningEffort },
     }),
+    onData: (data) => {
+      setError(null);
+    },
     onError: (error) => {
-      toast.error("You've been rate limited, please try again later!");
+      console.error("Error occurred", error);
+      setError(error.message || String(error));
     },
   });
 
@@ -57,6 +62,16 @@ export default function Chat({ onClose }: ChatProps = {}) {
       }
     }
 
+    const savedModel = localStorage.getItem("chat-model");
+    if (savedModel) {
+      setModel(savedModel as "gpt-5" | "gpt-5-mini");
+    }
+
+    const savedEffort = localStorage.getItem("chat-reasoning-effort");
+    if (savedEffort) {
+      setReasoningEffort(savedEffort as "low" | "medium" | "high");
+    }
+
     // Fetch available categories
     fetch("/api/categories")
       .then((res) => res.json())
@@ -71,6 +86,16 @@ export default function Chat({ onClose }: ChatProps = {}) {
     }
   }, [messages]);
 
+  // Save model to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("chat-model", model);
+  }, [model]);
+
+  // Save reasoning effort to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("chat-reasoning-effort", reasoningEffort);
+  }, [reasoningEffort]);
+
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -79,6 +104,7 @@ export default function Chat({ onClose }: ChatProps = {}) {
   const handleClear = () => {
     setMessages([]);
     localStorage.removeItem("chat-messages");
+    setError(null);
   };
 
   const handleSubmit = () => {
@@ -102,6 +128,30 @@ export default function Chat({ onClose }: ChatProps = {}) {
         status={status}
         messagesEndRef={messagesEndRef as RefObject<HTMLDivElement>}
       />
+
+      {error && (
+        <div className="flex-shrink-0 bg-red-950 border-t border-red-800 px-4 py-3">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-red-200 text-sm">
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="font-medium">Error occurred</span>
+              </div>
+              <button
+                onClick={handleClear}
+                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors flex-shrink-0"
+              >
+                Clear Chat
+              </button>
+            </div>
+            <div className="text-red-300 text-xs font-mono pl-6 break-all">
+              {error}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex-shrink-0 border-t border-[#1a1a1b] bg-[#0a0a0b] p-4">
         <CategoryFilter

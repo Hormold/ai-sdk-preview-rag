@@ -6,6 +6,9 @@ import { cn } from "@/lib/utils";
 import { CodeBlock, CodeBlockCopyButton } from "@/components/ai-elements/code-block";
 import { Sources, SourcesTrigger, SourcesContent, Source } from "@/components/ai-elements/sources";
 import { Response } from "@/components/ai-elements/response";
+import { Actions, Action } from "@/components/ai-elements/actions";
+import { ThumbsUp, ThumbsDown } from "lucide-react";
+import { toast } from "sonner";
 
 interface MessageListProps {
   messages: any[];
@@ -26,7 +29,7 @@ export function MessageList({ messages, status, messagesEndRef }: MessageListPro
       ) : (
         <>
           {messages.map((message, index) => (
-            <MessageBubble key={message.id || index} message={message} />
+            <MessageBubble key={message.id || index} message={message} allMessages={messages} />
           ))}
           {status === 'submitted' && messages.length > 0 && (
             <div className="flex justify-start">
@@ -42,8 +45,34 @@ export function MessageList({ messages, status, messagesEndRef }: MessageListPro
   );
 }
 
-const MessageBubble = ({ message }: { message: any }) => {
+const MessageBubble = ({ message, allMessages }: { message: any; allMessages: any[] }) => {
   const isUser = message.role === "user";
+  const [feedbackGiven, setFeedbackGiven] = useState(false);
+
+  const handleFeedback = async (rating: 'positive' | 'negative') => {
+    try {
+      const response = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rating,
+          messages: allMessages,
+          pageUrl: window.location.href,
+        }),
+      });
+
+      if (response.ok) {
+        setFeedbackGiven(true);
+        toast.success('Thanks for your feedback!');
+      } else {
+        const error = await response.json();
+        toast.error(error.error || 'Failed to submit feedback');
+      }
+    } catch (error) {
+      console.error('Feedback error:', error);
+      toast.error('Failed to submit feedback');
+    }
+  };
 
   return (
     <div className="space-y-2">
@@ -57,7 +86,7 @@ const MessageBubble = ({ message }: { message: any }) => {
                 animate={{ opacity: 1, y: 0 }}
                 className={`flex ${isUser ? "justify-end" : "justify-start"}`}
               >
-                <div className="max-w-[80%]">
+                <div className="max-w-[80%] space-y-2">
                   <div
                     className={cn(
                       "rounded-lg px-4 py-3",
@@ -74,6 +103,27 @@ const MessageBubble = ({ message }: { message: any }) => {
                       </Response>
                     )}
                   </div>
+                  {!isUser && !feedbackGiven && (
+                    <Actions className="ml-2">
+                      <Action
+                        tooltip="Good response"
+                        onClick={() => handleFeedback('positive')}
+                        className="text-[#64748b] hover:text-[#22c55e] hover:bg-[#1a1a1a]"
+                      >
+                        <ThumbsUp className="h-4 w-4" />
+                      </Action>
+                      <Action
+                        tooltip="Bad response"
+                        onClick={() => handleFeedback('negative')}
+                        className="text-[#64748b] hover:text-[#ef4444] hover:bg-[#1a1a1a]"
+                      >
+                        <ThumbsDown className="h-4 w-4" />
+                      </Action>
+                    </Actions>
+                  )}
+                  {!isUser && feedbackGiven && (
+                    <div className="text-xs text-[#64748b] ml-2">Thanks for your feedback!</div>
+                  )}
                 </div>
               </motion.div>
             );
@@ -333,7 +383,7 @@ const UnderstandQueryPart = ({ part }: { part: any }) => {
         className="flex justify-start"
       >
         <div className="flex items-center gap-2 bg-[#0f0f10] border border-[#262626] rounded-full px-3 py-1.5">
-          <svg className="w-3.5 h-3.5 text-[#2563eb] animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-3.5 h-3.5 text-[#2563eb] animate-spin-pause" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
