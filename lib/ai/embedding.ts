@@ -92,7 +92,10 @@ export const findRelevantContent = async (
     .select({
       name: embeddings.content,
       similarity,
-      category: resources.category
+      category: resources.category,
+      sourceUrl: resources.sourceUrl,
+      sourceTitle: resources.sourceTitle,
+      resourceId: embeddings.resourceId
     })
     .from(embeddings)
     .leftJoin(resources, sql`${embeddings.resourceId} = ${resources.id}`);
@@ -108,5 +111,34 @@ export const findRelevantContent = async (
     .orderBy((t) => desc(t.similarity))
     .limit(4);
 
+  console.log('📊 DB results:', JSON.stringify(similarGuides, null, 2));
   return similarGuides;
+};
+
+export const getFullDocument = async (resourceId: string) => {
+  const chunks = await db
+    .select({
+      content: embeddings.content,
+      sourceUrl: resources.sourceUrl,
+      sourceTitle: resources.sourceTitle,
+      category: resources.category
+    })
+    .from(embeddings)
+    .leftJoin(resources, sql`${embeddings.resourceId} = ${resources.id}`)
+    .where(sql`${embeddings.resourceId} = ${resourceId}`)
+    .orderBy(embeddings.id);
+
+  if (chunks.length === 0) {
+    return null;
+  }
+
+  const fullContent = chunks.map(chunk => chunk.content).join('\n\n');
+
+  return {
+    content: fullContent,
+    sourceUrl: chunks[0].sourceUrl,
+    sourceTitle: chunks[0].sourceTitle,
+    category: chunks[0].category,
+    chunkCount: chunks.length
+  };
 };

@@ -14,6 +14,7 @@ interface ParsedMarkdown {
   content: string;
   category: string;
   title: string;
+  sourceUrl: string;
 }
 
 export class LiveKitDocsIndexer {
@@ -57,15 +58,44 @@ export class LiveKitDocsIndexer {
   }
 
   private extractMdLinks(content: string): string[] {
-    const linkRegex = /https:\/\/docs\.livekit\.io[^)\s]+\.md/g;
-    const matches = content.match(linkRegex) || [];
-    return [...new Set(matches)]; // Remove duplicates
+    // Match both markdown links [text](url) and plain URLs
+    const markdownRegex = /\[([^\]]+)\]\((https:\/\/docs\.livekit\.io[^\)]+\.md)\)/g;
+    const plainUrlRegex = /https:\/\/docs\.livekit\.io\/[^\s\)\]]+\.md/g;
+
+    const links = new Set<string>();
+
+    // Extract from markdown links
+    let match;
+    while ((match = markdownRegex.exec(content)) !== null) {
+      links.add(match[2]); // The URL is in the second capture group
+    }
+
+    // Extract plain URLs
+    const plainMatches = content.match(plainUrlRegex) || [];
+    plainMatches.forEach(url => links.add(url));
+
+    return [...links];
   }
 
   private async fetchWithRetry(url: string, retries = this.maxRetries): Promise<string> {
     for (let i = 0; i < retries; i++) {
       try {
         const response = await fetch(url);
+
+        // If 404 and URL ends with .md, try without .md extension (HTML page)
+        if (response.status === 404 && url.endsWith('.md')) {
+          console.log(`📄 .md not found, trying HTML version: ${url.replace(/\.md$/, '')}`);
+          const htmlUrl = url.replace(/\.md$/, '');
+          const htmlResponse = await fetch(htmlUrl);
+
+          if (!htmlResponse.ok) {
+            throw new Error(`HTTP ${htmlResponse.status}: ${htmlResponse.statusText}`);
+          }
+
+          const html = await htmlResponse.text();
+          return this.stripHtmlTags(html);
+        }
+
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
@@ -77,6 +107,32 @@ export class LiveKitDocsIndexer {
       }
     }
     throw new Error(`Failed to fetch ${url} after ${retries} retries`);
+  }
+
+  private stripHtmlTags(html: string): string {
+    // Extract content from #main-content div
+    const mainContentMatch = html.match(/<div[^>]*id=["']main-content["'][^>]*>([\s\S]*?)<\/div>/i);
+    let content = mainContentMatch ? mainContentMatch[1] : html;
+
+    // Remove script and style tags with their content
+    content = content.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    content = content.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
+
+    // Remove HTML tags
+    content = content.replace(/<[^>]+>/g, '');
+
+    // Decode HTML entities
+    content = content.replace(/&nbsp;/g, ' ');
+    content = content.replace(/&amp;/g, '&');
+    content = content.replace(/&lt;/g, '<');
+    content = content.replace(/&gt;/g, '>');
+    content = content.replace(/&quot;/g, '"');
+    content = content.replace(/&#39;/g, "'");
+
+    // Clean up whitespace
+    content = content.replace(/\s+/g, ' ').trim();
+
+    return content;
   }
 
   private async processMdFile(url: string): Promise<ParsedMarkdown | null> {
@@ -128,7 +184,8 @@ export class LiveKitDocsIndexer {
     return {
       content: cleanedContent,
       category,
-      title
+      title,
+      sourceUrl: url.replace('.md', '') // Remove .md extension for web URL
     };
   }
 
@@ -203,7 +260,9 @@ export class LiveKitDocsIndexer {
         .insert(resources)
         .values({
           content: doc.content,
-          category: doc.category
+          category: doc.category,
+          sourceUrl: doc.sourceUrl,
+          sourceTitle: doc.title
         })
         .returning();
 

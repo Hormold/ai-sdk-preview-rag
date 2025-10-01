@@ -15,6 +15,13 @@
       "when": 1759285873323,
       "tag": "0001_tidy_selene",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1759297422097,
+      "tag": "0002_rich_juggernaut",
+      "breakpoints": true
     }
   ]
 }

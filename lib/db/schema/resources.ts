@@ -11,6 +11,8 @@ export const resources = pgTable("resources", {
     .$defaultFn(() => nanoid()),
   content: text("content").notNull(),
   category: varchar("category", { length: 255 }),
+  sourceUrl: text("source_url"),
+  sourceTitle: text("source_title"),
 
   createdAt: timestamp("created_at")
     .notNull()
@@ -24,6 +26,8 @@ export const resources = pgTable("resources", {
 export const insertResourceSchema = createSelectSchema(resources)
   .extend({
     category: z.string().optional(),
+    sourceUrl: z.string().optional(),
+    sourceTitle: z.string().optional(),
   })
   .omit({
     id: true,

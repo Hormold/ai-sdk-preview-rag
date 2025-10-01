@@ -257,7 +257,7 @@ export default function DemoPage() {
       {/* Main content wrapper */}
       <motion.div
         animate={{
-          marginRight: isChatSliderOpen ? 384 : 0 // 384px = w-96
+          marginRight: isChatSliderOpen ? 640 : 0 // 640px = w-[640px]
         }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         className="flex"
@@ -271,7 +271,7 @@ export default function DemoPage() {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 h-full w-96 bg-[#0a0a0b] border-l border-[#1a1a1b] z-50"
+            className="fixed right-0 top-0 h-full w-[640px] bg-[#0a0a0b] border-l border-[#1a1a1b] z-50"
           >
             <Chat onClose={() => setIsChatSliderOpen(false)} />
           </motion.div>
