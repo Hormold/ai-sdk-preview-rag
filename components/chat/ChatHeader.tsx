@@ -12,6 +12,8 @@ interface ChatHeaderProps {
   onReasoningChange: (effort: "low" | "medium" | "high") => void;
   onClear: () => void;
   onClose?: () => void;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 export function ChatHeader({
@@ -21,6 +23,8 @@ export function ChatHeader({
   onReasoningChange,
   onClear,
   onClose,
+  isExpanded,
+  onToggleExpand,
 }: ChatHeaderProps) {
   const [showModelMenu, setShowModelMenu] = useState(false);
 
@@ -30,13 +34,13 @@ export function ChatHeader({
   };
 
   return (
-    <div className="sticky top-0 z-50 flex-shrink-0 border-b border-[#1a1a1b] bg-[#0a0a0b]">
-      <div className="flex items-center justify-between px-4 py-3">
+    <div className="sticky top-0 z-50 flex-shrink-0 border-b border-[#1a1a1b] bg-[#0a0a0b] h-[63px]">
+      <div className="flex items-center justify-between px-4 py-3 pt-[22px]">
         <button
           onClick={() => setShowModelMenu(!showModelMenu)}
           className="flex items-center gap-2 text-[#f8fafc] font-medium hover:text-white transition-colors outline-none focus:outline-none"
         >
-          Ask AI
+          Ask LiveKit Agent
           <svg
             className={cn("w-4 h-4 transition-transform", showModelMenu && "rotate-180")}
             fill="none"
@@ -47,12 +51,31 @@ export function ChatHeader({
           </svg>
         </button>
         <div className="flex items-center gap-2">
+          {onToggleExpand && (
+            <button
+              onClick={onToggleExpand}
+              className="p-1.5 text-[#999999] hover:text-white transition-colors outline-none focus:outline-none"
+              title={isExpanded ? "Collapse chat" : "Expand chat"}
+            >
+              {isExpanded ? (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+              )}
+            </button>
+          )}
           <button
             onClick={handleClear}
-            className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors bg-[#1a1a1a] text-[#999999] hover:bg-[#dc2626] hover:text-white outline-none focus:outline-none"
+            className="p-1.5 text-[#999999] hover:text-white transition-colors outline-none focus:outline-none"
             title="Clear chat history"
           >
-            Clear
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
           </button>
           {onClose && (
             <button

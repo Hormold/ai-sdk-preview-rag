@@ -15,25 +15,22 @@ import {
   ChainOfThoughtSearchResults,
   ChainOfThoughtSearchResult,
 } from "@/components/ai-elements/chain-of-thought";
-import { ThumbsUp, ThumbsDown, Copy, SearchIcon, BookOpenIcon } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Copy, SearchIcon, BookOpenIcon, SettingsIcon } from "lucide-react";
 import { toast } from "sonner";
+import { EmptyState } from "./EmptyState";
 
 interface MessageListProps {
   messages: any[];
   status: string;
   messagesEndRef: React.RefObject<HTMLDivElement>;
+  onFocusInput?: () => void;
 }
 
-export function MessageList({ messages, status, messagesEndRef }: MessageListProps) {
+export function MessageList({ messages, status, messagesEndRef, onFocusInput }: MessageListProps) {
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
       {messages.length === 0 ? (
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <div className="text-[#94a3b8] text-lg mb-2">Start a conversation</div>
-            <div className="text-[#64748b] text-sm">Ask me anything about your docs</div>
-          </div>
-        </div>
+        <EmptyState onFocusInput={onFocusInput} />
       ) : (
         <>
           {messages.map((message, index) => (
@@ -161,6 +158,7 @@ const MessageBubble = ({ message, allMessages }: { message: any; allMessages: an
           case 'tool-getInformation':
           case 'tool-knowledgeSearch':
           case 'tool-getFullDocument':
+          case 'tool-getSDKChangelog':
             return <ToolInvocationPart key={index} part={part} />;
 
           case 'tool-understandQuery':
@@ -232,6 +230,8 @@ const ToolInvocationPart = ({ part }: { part: any }) => {
         return 'Searching documents';
       case 'tool-getFullDocument':
         return 'Reading documentation';
+      case 'tool-getSDKChangelog':
+        return 'Exploring changelog';
       default:
         return 'Processing';
     }
@@ -301,15 +301,16 @@ const ToolInvocationPart = ({ part }: { part: any }) => {
     case 'output-available':
       const isSearchTool = part.type === 'tool-knowledgeSearch' || part.type === 'tool-getInformation';
       const isDocumentTool = part.type === 'tool-getFullDocument';
+      const isChangelogTool = part.type === 'tool-getSDKChangelog';
       const searchQuery = part.input?.question || part.input?.similarQuestions?.[0];
       const documentTitle = part.input?.title;
+      const sdkName = part.input?.sdk;
       const timeTaken = elapsedTime > 0 ? `${elapsedTime}s` : '';
 
       const toolData = part.result || part.output;
       const sources = toolData && Array.isArray(toolData)
         ? toolData
             .filter((r: any) => {
-              console.log('📄 Result item:', r);
               return r.sourceUrl && r.sourceTitle;
             })
             .map((r: any) => ({ url: r.sourceUrl, title: r.sourceTitle }))
@@ -320,6 +321,52 @@ const ToolInvocationPart = ({ part }: { part: any }) => {
         : [];
       console.log('✅ Extracted sources:', sources);
 
+      if (isDocumentTool) {
+        const documentUrl = toolData?.sourceUrl;
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex justify-start"
+          >
+            <div className="not-prose max-w-prose">
+              <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                <BookOpenIcon className="size-4" />
+                {documentUrl ? (
+                  <a
+                    href={documentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 hover:text-foreground transition-colors"
+                  >
+                    Reading page «{documentTitle}»
+                  </a>
+                ) : (
+                  <span className="flex-1">Reading page «{documentTitle}»</span>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        );
+      }
+
+      if (isChangelogTool) {
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex justify-start"
+          >
+            <div className="not-prose max-w-prose">
+              <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                <SettingsIcon className="size-4" />
+                <span className="flex-1">Exploring changelog «{sdkName}»</span>
+              </div>
+            </div>
+          </motion.div>
+        );
+      }
+
       return (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -328,12 +375,12 @@ const ToolInvocationPart = ({ part }: { part: any }) => {
         >
           <ChainOfThought defaultOpen={false} className="max-w-[80%]">
             <ChainOfThoughtHeader>
-              {isSearchTool && searchQuery ? `Search: "${searchQuery}"` : isDocumentTool && documentTitle ? `Reading documentation...` : 'Tool execution'}
+              {isSearchTool && searchQuery ? `Search: «${searchQuery}»` : 'Tool execution'}
             </ChainOfThoughtHeader>
             <ChainOfThoughtContent>
               <ChainOfThoughtStep
-                icon={isSearchTool ? SearchIcon : isDocumentTool ? BookOpenIcon : undefined}
-                label={isSearchTool ? `Found ${sources.length} results` : isDocumentTool ? `Explored page: ${documentTitle}` : 'Completed'}
+                icon={isSearchTool ? SearchIcon : undefined}
+                label={isSearchTool ? `Found ${sources.length} results` : 'Completed'}
                 description={timeTaken ? `Completed in ${timeTaken}` : undefined}
                 status="complete"
               >

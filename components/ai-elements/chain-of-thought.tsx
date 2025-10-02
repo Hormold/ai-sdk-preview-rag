@@ -60,7 +60,7 @@ export const ChainOfThought = memo(
     return (
       <ChainOfThoughtContext.Provider value={{ isOpen, setIsOpen }}>
         <div
-          className={cn("not-prose max-w-prose space-y-4", className)}
+          className={cn("not-prose max-w-prose", className)}
           {...props}
         >
           {children}

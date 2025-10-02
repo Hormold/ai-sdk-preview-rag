@@ -10,17 +10,58 @@ import { EMBEDDING_MODEL } from "../constants";
 const TARGET_CHUNK_SIZE = 1000;
 const MIN_CHUNK_SIZE = 800; // Minimum 200 tokens
 const MAX_CHUNK_SIZE = 2000;
+const OVERLAP_SIZE = 200; // 50 tokens overlap (~200 chars)
 
-const generateChunks = (input: string): string[] => {
+/**
+ * Detect if chunk contains code blocks
+ */
+function hasCodeBlock(text: string): boolean {
+  return /```|`[^`]+`|function\s+\w+|class\s+\w+|\w+\s*\(.*\)\s*{/.test(text);
+}
+
+/**
+ * Detect programming language in code block
+ */
+function detectLanguage(text: string): string | undefined {
+  const langMatch = text.match(/```(\w+)/);
+  if (langMatch) return langMatch[1];
+
+  // Heuristic detection
+  if (text.includes('import ') && text.includes('from ')) return 'typescript';
+  if (text.includes('def ') && text.includes(':')) return 'python';
+  if (text.includes('func ') && text.includes('{')) return 'swift';
+  if (text.includes('fun ') && text.includes('{')) return 'kotlin';
+
+  return undefined;
+}
+
+interface ChunkWithMetadata {
+  content: string;
+  metadata: {
+    position: number;
+    hasCode: boolean;
+    language?: string;
+  };
+}
+
+const generateChunks = (input: string): ChunkWithMetadata[] => {
   const text = input.trim();
 
   // If text is small enough, return as single chunk
   if (text.length <= MAX_CHUNK_SIZE) {
-    return [text];
+    return [{
+      content: text,
+      metadata: {
+        position: 0,
+        hasCode: hasCodeBlock(text),
+        language: detectLanguage(text)
+      }
+    }];
   }
 
-  const chunks: string[] = [];
+  const chunks: ChunkWithMetadata[] = [];
   let start = 0;
+  let position = 0;
 
   while (start < text.length) {
     let end = Math.min(start + TARGET_CHUNK_SIZE, text.length);
@@ -46,16 +87,31 @@ const generateChunks = (input: string): string[] => {
       }
     }
 
-    // Ensure minimum chunk size
+    // Extract chunk
+    let chunkText: string;
     if (end - start < MIN_CHUNK_SIZE && start > 0) {
-      // Extend backwards to meet minimum size
       const extendedStart = Math.max(0, end - MIN_CHUNK_SIZE);
-      chunks.push(text.slice(extendedStart, end));
-      start = end;
+      chunkText = text.slice(extendedStart, end);
     } else {
-      chunks.push(text.slice(start, end));
+      chunkText = text.slice(start, end);
+    }
+
+    chunks.push({
+      content: chunkText,
+      metadata: {
+        position,
+        hasCode: hasCodeBlock(chunkText),
+        language: detectLanguage(chunkText)
+      }
+    });
+
+    // Move start forward with overlap (except for last chunk)
+    if (end < text.length) {
+      start = end - OVERLAP_SIZE;
+    } else {
       start = end;
     }
+    position++;
   }
 
   return chunks;
@@ -63,13 +119,17 @@ const generateChunks = (input: string): string[] => {
 
 export const generateEmbeddings = async (
   value: string,
-): Promise<Array<{ embedding: number[]; content: string }>> => {
+): Promise<Array<{ embedding: number[]; content: string; metadata: { position: number; hasCode: boolean; language?: string } }>> => {
   const chunks = generateChunks(value);
   const { embeddings } = await embedMany({
     model: EMBEDDING_MODEL,
-    values: chunks,
+    values: chunks.map(c => c.content),
   });
-  return embeddings.map((e, i) => ({ content: chunks[i], embedding: e }));
+  return embeddings.map((e, i) => ({
+    content: chunks[i].content,
+    embedding: e,
+    metadata: chunks[i].metadata
+  }));
 };
 
 export const generateEmbedding = async (value: string): Promise<number[]> => {

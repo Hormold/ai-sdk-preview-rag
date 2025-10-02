@@ -116,6 +116,7 @@ export default function DemoPage() {
   const [activeSection, setActiveSection] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [isChatSliderOpen, setIsChatSliderOpen] = useState(false);
+  const [isChatExpanded, setIsChatExpanded] = useState(false);
 
   // Handle responsive behavior
   useEffect(() => {
@@ -257,7 +258,7 @@ export default function DemoPage() {
       {/* Main content wrapper */}
       <motion.div
         animate={{
-          marginRight: isChatSliderOpen ? 640 : 0 // 640px = w-[640px]
+          marginRight: isChatSliderOpen ? (isChatExpanded ? 640 : 420) : 0
         }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         className="flex"
@@ -268,12 +269,18 @@ export default function DemoPage() {
         {isChatSliderOpen && (
           <motion.div
             initial={{ x: '100%' }}
-            animate={{ x: 0 }}
+            animate={{
+              x: 0,
+              width: isChatExpanded ? 640 : 420
+            }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 h-full w-[640px] bg-[#0a0a0b] border-l border-[#1a1a1b] z-50"
+            className="fixed right-0 top-0 h-full bg-[#0a0a0b] border-l border-[#1a1a1b] z-50"
           >
-            <Chat onClose={() => setIsChatSliderOpen(false)} />
+            <Chat
+              onClose={() => setIsChatSliderOpen(false)}
+              onExpandChange={setIsChatExpanded}
+            />
           </motion.div>
         )}
       </AnimatePresence>

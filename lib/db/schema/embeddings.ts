@@ -1,5 +1,5 @@
 import { nanoid } from "@/lib/utils";
-import { index, pgTable, text, varchar, vector } from "drizzle-orm/pg-core";
+import { index, integer, jsonb, pgTable, text, varchar, vector } from "drizzle-orm/pg-core";
 import { resources } from "./resources";
 
 export const embeddings = pgTable(
@@ -14,6 +14,11 @@ export const embeddings = pgTable(
     ),
     content: text("content").notNull(),
     embedding: vector("embedding", { dimensions: 1536 }).notNull(),
+    metadata: jsonb("metadata").$type<{
+      position: number;
+      hasCode: boolean;
+      language?: string;
+    }>(),
   },
   (table) => ({
     embeddingIndex: index("embeddingIndex").using(

@@ -11,16 +11,19 @@ import { ChatInput } from "./chat/ChatInput";
 
 interface ChatProps {
   onClose?: () => void;
+  onExpandChange?: (isExpanded: boolean) => void;
 }
 
-export default function Chat({ onClose }: ChatProps = {}) {
+export default function Chat({ onClose, onExpandChange }: ChatProps = {}) {
   const [input, setInput] = useState<string>("");
   const [model, setModel] = useState<"low" | "high">("low");
   const [reasoningEffort, setReasoningEffort] = useState<"low" | "medium" | "high">("low");
   const [categories, setCategories] = useState<Array<{ name: string; count: number }>>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const modelRef = useRef(model);
   const effortRef = useRef(reasoningEffort);
@@ -88,6 +91,11 @@ export default function Chat({ onClose }: ChatProps = {}) {
       setReasoningEffort(savedEffort as "low" | "medium" | "high");
     }
 
+    const savedExpanded = localStorage.getItem("chat-expanded");
+    if (savedExpanded) {
+      setIsExpanded(savedExpanded === "true");
+    }
+
     // Fetch available categories
     fetch("/api/categories")
       .then((res) => res.json())
@@ -111,6 +119,14 @@ export default function Chat({ onClose }: ChatProps = {}) {
   useEffect(() => {
     localStorage.setItem("chat-reasoning-effort", reasoningEffort);
   }, [reasoningEffort]);
+
+  // Save expanded state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("chat-expanded", String(isExpanded));
+    if (onExpandChange) {
+      onExpandChange(isExpanded);
+    }
+  }, [isExpanded, onExpandChange]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -137,12 +153,15 @@ export default function Chat({ onClose }: ChatProps = {}) {
         onReasoningChange={setReasoningEffort}
         onClear={handleClear}
         onClose={onClose}
+        isExpanded={isExpanded}
+        onToggleExpand={() => setIsExpanded(!isExpanded)}
       />
 
       <MessageList
         messages={messages}
         status={status}
         messagesEndRef={messagesEndRef as RefObject<HTMLDivElement>}
+        onFocusInput={() => inputRef.current?.focus()}
       />
 
       {error && (
@@ -169,20 +188,22 @@ export default function Chat({ onClose }: ChatProps = {}) {
         </div>
       )}
 
-      <div className="flex-shrink-0 border-t border-[#1a1a1b] bg-[#0a0a0b] p-4">
-        <CategoryFilter
-          categories={categories}
-          selectedCategories={selectedCategories}
-          onSelectCategories={setSelectedCategories}
-        />
-
+      <div className="flex-shrink-0 bg-[#0a0a0b] p-4">
         <ChatInput
+          ref={inputRef}
           value={input}
           onChange={setInput}
           onSubmit={handleSubmit}
           onStop={stop}
           disabled={status === "submitted"}
           isStreaming={status === "streaming"}
+          renderFilter={() => (
+            <CategoryFilter
+              categories={categories}
+              selectedCategories={selectedCategories}
+              onSelectCategories={setSelectedCategories}
+            />
+          )}
         />
       </div>
     </div>

@@ -2,7 +2,11 @@ import { createResource } from "@/lib/actions/resources";
 import { findRelevantContent, getFullDocument, findDocumentByUrl } from "@/lib/ai/embedding";
 import { BIG_AGENT_MODEL, SMALL_AGENT_MODEL, SUB_AGENT_MODEL } from "@/lib/constants";
 import { convertToModelMessages, generateObject, stepCountIs, streamText, tool, UIMessage } from "ai";
-import { array, z } from "zod";
+import { z } from "zod";
+import { fetchSDKChangelog, SDKName, getAvailableSDKs } from "@/lib/changelog/sdk-changelog";
+import { searchFAQCache } from "@/lib/faq/faq-cache";
+// Removed: predictAndWarm - not serverless-friendly (in-memory cache)
+// Removed: trackQuery - analytics добавим позже если нужно
 
 export const codeBlockSchema = z.object({
   language: z.string(),
@@ -16,6 +20,23 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
   const { messages, model: selectedModel, currentUrl, effort, selectedCategories }: { messages: UIMessage[]; model?: "high" | "low"; currentUrl?: string; effort?: string; selectedCategories?: string[] } = await req.json();
   const model = selectedModel === "high" ? BIG_AGENT_MODEL : selectedModel === "low" ? SMALL_AGENT_MODEL : SUB_AGENT_MODEL;
+
+  // Extract last user message for FAQ lookup
+  const lastUserMessage = messages.filter(m => m.role === 'user').pop();
+  const userQuery = lastUserMessage?.parts.filter(p => p.type === 'text').map(p => p.text).join(' ') || '';
+
+  // Check FAQ cache for relevant hint
+  let faqHint = '';
+  if (userQuery) {
+    const faqResult = await searchFAQCache(userQuery, 0.5); // Higher threshold (70% similarity) for hints
+    if (faqResult) {
+      faqHint = `\n\n# Hint, similar question
+**Q:** ${faqResult.question}
+**A:** ${faqResult.answer}
+This information might be relevant to the user's current query. Use it if applicable`;
+      console.log(`💡 FAQ hint added (similarity: ${faqResult.similarity.toFixed(2)})`);
+    }
+  }
 
   // Find current document context if URL provided
   let currentDocContext = '';
@@ -31,6 +52,7 @@ export async function POST(req: Request) {
     currentUrl,
     effort,
     selectedCategories,
+    faqHintAdded: !!faqHint,
   });
 
   const result = streamText({
@@ -56,6 +78,7 @@ You're highly self-aware and comfortable acknowledging knowledge gaps. You provi
 ${currentUrl ? `The user is currently viewing: ${currentUrl}` : 'You are interacting with a user through a chat interface.'}
 ${selectedCategories && selectedCategories.length > 0 ? `The user has filtered their search to these categories: ${selectedCategories.join(', ')}` : 'You have access to the complete knowledge base across all categories.'}
 ${currentDocContext}
+${faqHint}
 
 You have expert-level familiarity with all documentation in the knowledge base. Your role is to help users navigate, understand, and implement solutions based on this knowledge.
 
@@ -72,6 +95,21 @@ Adjust your communication style based on user's technical level:
 # Goal
 Your primary goal is to proactively address user questions using your expertise and the knowledge base. Provide clear, concise, and practical solutions based **exclusively** on information retrieved from tools.
 If question are related to SDK - ask about platform if not specified by user and you cannot understand from the question which platform is user talking about.
+
+**SDK Version & Changelog Queries:**
+When users ask about SDK versions, releases, changelogs, or "what's new":
+1. Use \`getSDKChangelog\` tool to fetch the latest changelog for the specific SDK
+2. Analyze the changelog and extract relevant information (version numbers, features, breaking changes, bug fixes)
+3. Summarize in a structured format with version numbers and dates
+4. Highlight breaking changes prominently if present
+5. If user asks to compare versions, fetch the changelog and explain differences between versions
+6. It will return last 1000 lines of changelog only.
+
+Examples of when to use \`getSDKChangelog\`:
+- "What's new in Swift SDK 2.5?"
+- "Show me Python Agents SDK changelog"
+- "Breaking changes in React Native library"
+- "Recent updates to JavaScript SDK"
 
 **CRITICAL - How to Answer:**
 - ANSWER the user's question - don't dump full documents
@@ -175,6 +213,8 @@ Available tools for your use:
 
 **getFullDocument**: Retrieve the complete content of a document by its resourceId. Combines all chunks for a resource into full document text. Use this when you need the complete context from a specific document found via getInformation.
 
+**getSDKChangelog**: Fetch changelog/release notes for a specific LiveKit SDK. Returns last 1000 lines of CHANGELOG.md with version history, new features, breaking changes, and bug fixes. Use when users ask about SDK versions, releases, what's new, or breaking changes. Available SDKs: Python Agents SDK, JavaScript SDK, React Components, React Native, Swift SDK, Android SDK, Flutter SDK, Unity SDK, Rust SDK, and all Server SDKs.
+
 **redirectToDocs**: Proactively direct users to specific documentation pages when detailed information is available there. CRITICAL: Description MUST be 2-3 words maximum (e.g., "View docs", "API reference", "Full guide"). ALWAYS call this tool AFTER your text response is complete - never mention the button in your text. The tool will render a clickable button automatically. Use when the user would benefit from comprehensive documentation beyond what you can summarize.
 
 **redirectToSlack**: Direct users to the community Slack channel for questions, discussions, or community support. CRITICAL: Description MUST be 2-3 words maximum (e.g., "Join Slack", "Ask community", "Get help"). ALWAYS call this tool AFTER your text response is complete - never mention joining Slack in your text response. The tool will render a clickable button automatically. Use when users need real-time help, want to connect with other developers, have questions outside your knowledge base, or when they ask how to get help/contact support.
@@ -206,7 +246,7 @@ Available tools for your use:
           description: z.string().describe("Why they should join Slack (e.g., 'Get help from the community')"),
         }),
         execute: async ({ description }) => {
-          return { url: 'https://slack.example.com', description, type: 'slack' };
+          return { url: 'https://livekit-users.slack.com', description, type: 'slack' };
         },
       }),
       redirectToExternalURL: tool({
@@ -235,7 +275,7 @@ Available tools for your use:
           question: z.string().describe("the users question (english only)"),
           similarQuestions: z.array(z.string()).describe("keywords to search for also (english only)"),
         }),
-        execute: async ({ similarQuestions }) => {
+        execute: async ({ question, similarQuestions }) => {
           const results = await Promise.all(
             similarQuestions.map(
               async (question: string) => await findRelevantContent(question, selectedCategories),
@@ -261,6 +301,28 @@ Available tools for your use:
             return { error: "Document not found" };
           }
           return document;
+        },
+      }),
+      getSDKChangelog: tool({
+        description: `Fetch the changelog (release notes) for a specific LiveKit SDK. Returns the last 1000 lines of the CHANGELOG.md file, which includes recent versions and changes. Use this when users ask about SDK versions, what's new, breaking changes, or release history.`,
+        inputSchema: z.object({
+          sdk: z.enum(SDKName).describe(
+            `The SDK to fetch changelog for`
+          ),
+        }),
+        execute: async ({ sdk }) => {
+          try {
+            const changelog = await fetchSDKChangelog(sdk);
+            return {
+              sdk,
+              changelog,
+              note: "This is the last 1000 lines of the CHANGELOG.md file. Analyze and summarize the relevant parts for the user's question."
+            };
+          } catch (error) {
+            return {
+              error: `Failed to fetch changelog for ${sdk}: ${error instanceof Error ? error.message : String(error)}`
+            };
+          }
         },
       }),
       // OLD APPROACH: Generated questions in vacuum without KB context - produced garbage for specific queries
