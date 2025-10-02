@@ -4,16 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Chat from '@/components/chat';
 import Image from 'next/image';
-import { MessageSquareIcon } from 'lucide-react';
-import {
-  OpenIn,
-  OpenInChatGPT,
-  OpenInClaude,
-  OpenInContent,
-  OpenInScira,
-  OpenInT3,
-  OpenInTrigger,
-} from '@/components/ai-elements/open-in-chat';
+import { Sparkles } from 'lucide-react';
 
 // Types for our documentation structure
 interface NavItem {
@@ -117,6 +108,7 @@ export default function DemoPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isChatSliderOpen, setIsChatSliderOpen] = useState(false);
   const [isChatExpanded, setIsChatExpanded] = useState(false);
+  const [chatMode, setChatMode] = useState<'normal' | 'page'>('normal');
 
   // Handle responsive behavior
   useEffect(() => {
@@ -243,7 +235,10 @@ export default function DemoPage() {
               </svg>
             </div>
             <button
-              onClick={() => setIsChatSliderOpen(true)}
+              onClick={() => {
+                setChatMode('normal');
+                setIsChatSliderOpen(true);
+              }}
               className="p-2 text-[#94a3b8] hover:text-[#f8fafc] transition-colors"
               title="Open Chat"
             >
@@ -280,6 +275,10 @@ export default function DemoPage() {
             <Chat
               onClose={() => setIsChatSliderOpen(false)}
               onExpandChange={setIsChatExpanded}
+              talkWithPage={chatMode === 'page'}
+              pageTitle={chatMode === 'page' ? 'Transcriptions' : undefined}
+              pageUrl={chatMode === 'page' && typeof window !== 'undefined' ? window.location.href : undefined}
+              onDisableTalkWithPage={() => setChatMode('normal')}
             />
           </motion.div>
         )}
@@ -337,21 +336,15 @@ export default function DemoPage() {
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setIsChatSliderOpen(!isChatSliderOpen)}
-                  className="flex items-center gap-2 px-3 py-2 text-sm bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-md transition-colors"
+                  onClick={() => {
+                    setChatMode('page');
+                    setIsChatSliderOpen(true);
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-[#94a3b8] hover:text-[#f8fafc] border border-[#333333] hover:border-[#94a3b8] rounded-md transition-colors"
                 >
-                  <MessageSquareIcon className="w-4 h-4" />
-                  {isChatSliderOpen ? 'Close AI' : 'Ask AI'}
+                  <Sparkles className="w-4 h-4" />
+                  Ask a question
                 </button>
-                <OpenIn query="How do I integrate text and transcriptions into my LiveKit agent?">
-                  <OpenInTrigger />
-                  <OpenInContent>
-                    <OpenInChatGPT />
-                    <OpenInClaude />
-                    <OpenInT3 />
-                    <OpenInScira />
-                  </OpenInContent>
-                </OpenIn>
                 <button className="flex items-center gap-2 px-3 py-2 text-sm text-[#94a3b8] hover:text-[#f8fafc] border border-[#333333] hover:border-[#94a3b8] rounded-md transition-colors">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />

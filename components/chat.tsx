@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, RefObject } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChatHeader } from "./chat/ChatHeader";
 import { CategoryFilter } from "./chat/CategoryFilter";
 import { MessageList } from "./chat/MessageList";
@@ -11,9 +12,13 @@ import { ChatInput } from "./chat/ChatInput";
 interface ChatProps {
   onClose?: () => void;
   onExpandChange?: (isExpanded: boolean) => void;
+  talkWithPage?: boolean;
+  pageTitle?: string;
+  pageUrl?: string;
+  onDisableTalkWithPage?: () => void;
 }
 
-export default function Chat({ onClose, onExpandChange }: ChatProps = {}) {
+export default function Chat({ onClose, onExpandChange, talkWithPage = false, pageTitle, pageUrl, onDisableTalkWithPage }: ChatProps = {}) {
   const [input, setInput] = useState<string>("");
   const [model, setModel] = useState<"low" | "high">("low");
   const [reasoningEffort, setReasoningEffort] = useState<"low" | "medium" | "high">("low");
@@ -45,9 +50,10 @@ export default function Chat({ onClose, onExpandChange }: ChatProps = {}) {
       api: '/api/chat',
       body: () => ({
         model: modelRef.current,
-        currentUrl: window.location.href,
+        currentUrl: pageUrl || (typeof window !== 'undefined' ? window.location.href : ''),
         selectedCategories: categoriesRef.current,
         effort: effortRef.current,
+        talkWithPage,
       }),
     }),
     onData: (data) => {
@@ -187,7 +193,38 @@ export default function Chat({ onClose, onExpandChange }: ChatProps = {}) {
         </div>
       )}
 
-      <div className="flex-shrink-0 bg-[#0a0a0b] p-4">
+      <div className="flex-shrink-0 px-4 pb-4">
+        <div className="mb-2">
+          <AnimatePresence>
+            {talkWithPage && pageTitle && (
+              <motion.div
+                className="inset-0"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              >
+                <div className="flex items-center justify-between gap-2 px-3 py-2 bg-[#1a1a1b] border border-[#333333] rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-[#94a3b8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    <span className="text-sm text-[#f8fafc]">{pageTitle}</span>
+                  </div>
+                  <button
+                    onClick={onDisableTalkWithPage}
+                    className="p-1 text-[#94a3b8] hover:text-[#f8fafc] transition-colors"
+                    title="Exit page mode"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
         <ChatInput
           ref={inputRef as RefObject<HTMLTextAreaElement>}
           value={input}
