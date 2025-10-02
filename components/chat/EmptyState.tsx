@@ -49,7 +49,7 @@ export function EmptyState({ onFocusInput }: EmptyStateProps) {
 
           <button onClick={onFocusInput} className="group px-5 py-3 bg-gradient-to-br from-[#0f0f10] to-[#1a1a1b] border border-[#262626] rounded-xl hover:border-[#3b3b3b] hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-200 text-left">
             <div className="text-[#94a3b8] text-sm font-medium group-hover:text-[#cbd5e1] group-hover:translate-x-0.5 transition-all">
-              What's new in SDKs?
+              What&apos;s new in SDKs?
             </div>
           </button>
 

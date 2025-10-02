@@ -112,7 +112,7 @@ export function ChatHeader({
                     className={cn(
                       "flex-1 px-3 py-2 rounded-md text-xs font-medium transition-colors outline-none focus:outline-none border",
                       model === "high"
-                        ? "bg-[#2563eb] text-white border-[#2563eb]"
+                        ? "bg-[#1FD5F9] text-[#070707] border-[#1FD5F9]"
                         : "bg-[#1a1a1a] text-[#999999] hover:bg-[#2a2a2a] border-[#2a2a2a]"
                     )}
                   >
@@ -123,7 +123,7 @@ export function ChatHeader({
                     className={cn(
                       "flex-1 px-3 py-2 rounded-md text-xs font-medium transition-colors outline-none focus:outline-none border",
                       model === "low"
-                        ? "bg-[#2563eb] text-white border-[#2563eb]"
+                        ? "bg-[#1FD5F9] text-[#070707] border-[#1FD5F9]"
                         : "bg-[#1a1a1a] text-[#999999] hover:bg-[#2a2a2a] border-[#2a2a2a]"
                     )}
                   >
@@ -140,7 +140,7 @@ export function ChatHeader({
                     className={cn(
                       "flex-1 px-3 py-2 rounded-md text-xs font-medium transition-colors outline-none focus:outline-none border",
                       reasoningEffort === "low"
-                        ? "bg-[#2563eb] text-white border-[#2563eb]"
+                        ? "bg-[#1FD5F9] text-[#070707] border-[#1FD5F9]"
                         : "bg-[#1a1a1a] text-[#999999] hover:bg-[#2a2a2a] border-[#2a2a2a]"
                     )}
                   >
@@ -151,7 +151,7 @@ export function ChatHeader({
                     className={cn(
                       "flex-1 px-3 py-2 rounded-md text-xs font-medium transition-colors outline-none focus:outline-none border",
                       reasoningEffort === "medium"
-                        ? "bg-[#2563eb] text-white border-[#2563eb]"
+                        ? "bg-[#1FD5F9] text-[#070707] border-[#1FD5F9]"
                         : "bg-[#1a1a1a] text-[#999999] hover:bg-[#2a2a2a] border-[#2a2a2a]"
                     )}
                   >
@@ -162,7 +162,7 @@ export function ChatHeader({
                     className={cn(
                       "flex-1 px-3 py-2 rounded-md text-xs font-medium transition-colors outline-none focus:outline-none border",
                       reasoningEffort === "high"
-                        ? "bg-[#2563eb] text-white border-[#2563eb]"
+                        ? "bg-[#1FD5F9] text-[#070707] border-[#1FD5F9]"
                         : "bg-[#1a1a1a] text-[#999999] hover:bg-[#2a2a2a] border-[#2a2a2a]"
                     )}
                   >

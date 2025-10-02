@@ -3,10 +3,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://ai-sdk-preview-rag.vercel.app"),
-  title: "Retrieval Augmented Generation Preview",
+  title: "LiveKit Agent Demo",
   description:
-    "Augment language model generations with vector based retrieval using the Vercel AI SDK",
+    "LiveKit Agent Demo",
 };
 
 export default function RootLayout({
@@ -16,7 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="relative min-h-screen">{children}</body>
     </html>
   );
 }

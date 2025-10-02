@@ -120,6 +120,15 @@ This information might be relevant to the user's current query. Use it if applic
           return { url, description, type: 'external' };
         },
       }),
+      openTester: tool({
+        description: `Open LiveKit connection tester when users have connection issues, want to test their setup, or debug WebRTC/signaling problems. Use this when they mention connection timeouts, firewall issues, or want to verify their LiveKit configuration.`,
+        inputSchema: z.object({
+          description: z.string().describe("Button text (e.g., 'Test Your Connection', 'Open Connection Tester')"),
+        }),
+        execute: async ({ description }) => {
+          return { description };
+        },
+      }),
       getInformation: tool({
         description: `get information from your knowledge base to answer questions.`,
         inputSchema: z.object({

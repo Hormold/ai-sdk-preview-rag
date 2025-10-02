@@ -91,7 +91,7 @@ export const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 
     return (
       <form onSubmit={handleSubmit} className="relative">
-        <div className="relative bg-[#1a1a1b] border border-[#333333] rounded-2xl px-4 py-3 focus-within:border-[#2563eb] transition-colors">
+        <div className="relative bg-[#1a1a1b] border border-[#333333] rounded-2xl px-4 py-3 focus-within:border-[#1FD5F9] transition-colors">
           <Textarea
             ref={ref}
             value={value}
@@ -138,7 +138,7 @@ export const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(
                   className={cn(
                     "p-1.5 transition-colors",
                     value.trim() && !disabled
-                      ? "text-[#2563eb] hover:text-[#1d4ed8]"
+                      ? "text-[#1FD5F9] hover:text-[#1FD5F9]/80"
                       : "text-[#64748b] cursor-not-allowed"
                   )}
                   title="Send message"

@@ -212,7 +212,7 @@ export default function DemoPage() {
                 placeholder="Search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-[#1a1a1b] border border-[#333333] text-[#f8fafc] placeholder-[#94a3b8] rounded-md px-3 py-2 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-[#2563eb] focus:border-[#2563eb]"
+                className="bg-[#1a1a1b] border border-[#333333] text-[#f8fafc] placeholder-[#94a3b8] rounded-md px-3 py-2 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-[#1FD5F9] focus:border-[#1FD5F9]"
               />
               <svg className="absolute right-3 top-2.5 w-4 h-4 text-[#94a3b8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -302,7 +302,7 @@ export default function DemoPage() {
                           onClick={() => scrollToSection(item.href?.replace('#', '') || '')}
                           className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
                             item.current
-                              ? 'bg-[#2563eb] text-white shadow-sm'
+                              ? 'bg-[#1FD5F9] text-[#070707] shadow-sm'
                               : 'text-[#cbd5e1] hover:text-[#f8fafc] hover:bg-[#1e1e20]'
                           }`}
                         >
@@ -437,7 +437,7 @@ export default function DemoPage() {
                   onClick={() => scrollToSection(item.id)}
                   className={`block w-full text-left text-sm transition-colors ${
                     activeSection === item.id
-                      ? 'text-[#2563eb] bg-[#2563eb]/10 rounded px-2 py-1'
+                      ? 'text-[#1FD5F9] bg-[#1FD5F9]/10 rounded px-2 py-1'
                       : 'text-[#cbd5e1] hover:text-[#f8fafc] px-2 py-1'
                   }`}
                   style={{

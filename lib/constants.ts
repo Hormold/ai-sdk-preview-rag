@@ -9,7 +9,7 @@ export const xai = createXai({
   apiKey: process.env.XAI_API_KEY,
 });
 
-export const BIG_AGENT_MODEL = xai('grok-4-fast-reasoning')//openai("gpt-5")
+export const BIG_AGENT_MODEL = xai('grok-4')//openai("gpt-5")
 
 
 export const SDK_SOURCES: Record<SDKName, SDKSource> = {

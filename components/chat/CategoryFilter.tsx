@@ -59,20 +59,25 @@ export function CategoryFilter({
         <DropdownMenuTrigger asChild>
           <button
             className={cn(
-              "p-1.5 transition-colors outline-none focus:outline-none",
-              hasActiveFilters ? "text-[#2563eb]" : "text-[#94a3b8] hover:text-white"
+              "p-1.5 transition-colors outline-none focus:outline-none relative",
+              hasActiveFilters ? "text-[#1FD5F9]" : "text-[#94a3b8] hover:text-white"
             )}
             title="Filter categories"
           >
             <FilterIcon className="w-5 h-5" />
+            {hasActiveFilters && (
+              <span className="absolute -top-1 -right-1 bg-[#1FD5F9] text-[#070707] text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {selectedCategories.length}
+              </span>
+            )}
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-56 bg-[#0f0f10] border-[#262626]">
           <DropdownMenuItem
             onClick={handleClearAll}
             className={cn(
-              "cursor-pointer text-xs hover:bg-[#2563eb]/10",
-              !hasActiveFilters ? "bg-[#2563eb] text-white hover:bg-[#2563eb]" : "text-[#94a3b8] hover:text-[#cbd5e1]"
+              "cursor-pointer text-xs hover:bg-[#1FD5F9]/10",
+              !hasActiveFilters ? "bg-[#1FD5F9] text-[#070707] hover:bg-[#1FD5F9]" : "text-[#94a3b8] hover:text-[#cbd5e1]"
             )}
           >
             <div className="flex items-center justify-between w-full">
@@ -87,8 +92,8 @@ export function CategoryFilter({
                 key={cat.name}
                 onClick={() => handleToggleCategory(cat.name)}
                 className={cn(
-                  "cursor-pointer text-xs hover:bg-[#2563eb]/10",
-                  isSelected ? "bg-[#2563eb] text-white hover:bg-[#2563eb]" : "text-[#94a3b8] hover:text-[#cbd5e1]"
+                  "cursor-pointer text-xs hover:bg-[#1FD5F9]/10",
+                  isSelected ? "bg-[#1FD5F9] text-[#070707] hover:bg-[#1FD5F9]" : "text-[#94a3b8] hover:text-[#cbd5e1]"
                 )}
               >
                 <div className="flex items-center justify-between w-full">
