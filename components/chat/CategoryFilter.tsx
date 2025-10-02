@@ -108,7 +108,7 @@ export function CategoryFilter({
                 }}
                 className="cursor-pointer text-xs text-[#64748b] hover:text-[#94a3b8] hover:bg-[#1a1a1b] justify-center"
               >
-                <ChevronDownIcon className={cn("w-3.5 h-3.5 transition-transform", showAll && "rotate-180")} />
+                <ChevronDownIcon className={cn("w-3.5 h-3.5 transition-transform", !showAll && "rotate-180")} />
                 <span className="ml-1">{showAll ? "Show less" : "Show more"}</span>
               </DropdownMenuItem>
             </>

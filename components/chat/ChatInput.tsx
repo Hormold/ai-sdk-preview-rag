@@ -6,6 +6,7 @@ import { MicIcon, ArrowUpIcon, SquareIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
+  ref: React.RefObject<HTMLTextAreaElement>;
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;

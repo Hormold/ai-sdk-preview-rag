@@ -2,18 +2,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Input } from "@/components/ui/input";
-import { UIMessage } from "ai";
-import { useChat } from "@ai-sdk/react";
-import { useMemo } from "react";
-import ReactMarkdown, { Options } from "react-markdown";
-import ProjectOverview from "@/components/project-overview";
-import { LoadingIcon } from "@/components/icons";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import Chat from '@/components/chat';
 import Image from 'next/image';
+import { MessageSquareIcon } from 'lucide-react';
+import {
+  OpenIn,
+  OpenInChatGPT,
+  OpenInClaude,
+  OpenInContent,
+  OpenInScira,
+  OpenInT3,
+  OpenInTrigger,
+} from '@/components/ai-elements/open-in-chat';
 
 // Types for our documentation structure
 interface NavItem {
@@ -332,15 +332,33 @@ export default function DemoPage() {
             {/* Page Header */}
             <div className="flex items-start justify-between mb-8">
               <div>
-                <h1 className="text-4xl font-bold text-[#f8fafc] mb-4">Text and transcriptions</h1>
+                <h1 className="text-4xl font-bold text-[#f8fafc] mb-4">Transcriptions</h1>
                 <p className="text-lg text-[#cbd5e1]">Integrate realtime text features into your agent.</p>
               </div>
-              <button className="flex items-center gap-2 px-3 py-2 text-sm text-[#94a3b8] hover:text-[#f8fafc] border border-[#333333] hover:border-[#94a3b8] rounded-md transition-colors">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                Copy page
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsChatSliderOpen(!isChatSliderOpen)}
+                  className="flex items-center gap-2 px-3 py-2 text-sm bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-md transition-colors"
+                >
+                  <MessageSquareIcon className="w-4 h-4" />
+                  {isChatSliderOpen ? 'Close AI' : 'Ask AI'}
+                </button>
+                <OpenIn query="How do I integrate text and transcriptions into my LiveKit agent?">
+                  <OpenInTrigger />
+                  <OpenInContent>
+                    <OpenInChatGPT />
+                    <OpenInClaude />
+                    <OpenInT3 />
+                    <OpenInScira />
+                  </OpenInContent>
+                </OpenIn>
+                <button className="flex items-center gap-2 px-3 py-2 text-sm text-[#94a3b8] hover:text-[#f8fafc] border border-[#333333] hover:border-[#94a3b8] rounded-md transition-colors">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Copy Markdown
+                </button>
+              </div>
             </div>
 
             {/* Content */}

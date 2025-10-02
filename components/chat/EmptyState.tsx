@@ -31,7 +31,7 @@ export function EmptyState({ onFocusInput }: EmptyStateProps) {
             <h2 className="text-[#f1f5f9] text-3xl font-bold mb-3 bg-gradient-to-r from-[#f1f5f9] to-[#94a3b8] bg-clip-text text-transparent">
               LiveKit AI Assistant
             </h2>
-            <p className="text-[#64748b] text-base">Ask me anything about LiveKit integration, SDKs, and debugging</p>
+            <p className="text-[#64748b] text-base">Ask me anything about LiveKit integration, SDKs and other LiveKit topics</p>
           </div>
         </motion.div>
 

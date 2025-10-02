@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef, RefObject } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { toast } from "sonner";
 import { ChatHeader } from "./chat/ChatHeader";
 import { CategoryFilter } from "./chat/CategoryFilter";
 import { MessageList } from "./chat/MessageList";
@@ -190,7 +189,7 @@ export default function Chat({ onClose, onExpandChange }: ChatProps = {}) {
 
       <div className="flex-shrink-0 bg-[#0a0a0b] p-4">
         <ChatInput
-          ref={inputRef}
+          ref={inputRef as RefObject<HTMLTextAreaElement>}
           value={input}
           onChange={setInput}
           onSubmit={handleSubmit}
