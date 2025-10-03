@@ -31,6 +31,9 @@ export function MessageBubble({ message, allMessages }: MessageBubbleProps) {
       {reorderedParts.map((part: any, index: number) => {
         switch (part.type) {
           case 'text':
+            if(!part.text || part.text.trim() === '') {
+              return null;
+            }
             return (
               <motion.div
                 key={index}

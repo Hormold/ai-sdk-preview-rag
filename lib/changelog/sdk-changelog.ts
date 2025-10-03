@@ -88,18 +88,16 @@ function parseReleasesAtom(xml: string): string {
  * Fetch changelog for a specific SDK
  * Supports both CHANGELOG.md and GitHub Releases Atom feeds
  */
-export async function fetchSDKChangelog(sdk: SDKName): Promise<string> {
+export async function fetchSDKChangelog(sdk: SDKName): Promise<{changelog: string, link: string}> {
   // Check cache (note: in serverless, cache is per-instance)
   const cached = changelogCache.get(sdk);
   const now = Date.now();
+   const source = SDK_SOURCES[sdk];
 
   if (cached && (now - cached.fetchedAt) < CACHE_TTL) {
     console.log(`📦 Using cached changelog for ${sdk}`);
-    return cached.content;
+    return {changelog: cached.content, link: source.url};
   }
-
-  const source = SDK_SOURCES[sdk];
-  console.log(`🔄 Fetching ${source.type} from ${source.url}`);
 
   try {
     const response = await fetch(source.url);
@@ -128,14 +126,14 @@ export async function fetchSDKChangelog(sdk: SDKName): Promise<string> {
       fetchedAt: now
     });
 
-    return formattedContent;
+    return {changelog: formattedContent, link: source.url};
   } catch (error) {
     console.error(`❌ Failed to fetch changelog for ${sdk}:`, error);
 
     // Fallback to stale cache if available
     if (cached) {
       console.log(`⚠️ Returning stale cache as fallback`);
-      return cached.content;
+      return {changelog: cached.content, link: source.url};
     }
 
     throw new Error(`Unable to fetch changelog for ${sdk}`);

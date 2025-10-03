@@ -158,7 +158,7 @@ This information might be relevant to the user's current query. Use it if applic
         execute: async ({ resourceId }) => {
           const document = await getFullDocument(resourceId);
           if (!document) {
-            return { error: "Document not found" };
+            return { error: "Document not found, check resourceId" };
           }
           return document;
         },
@@ -172,9 +172,10 @@ This information might be relevant to the user's current query. Use it if applic
         }),
         execute: async ({ sdk }) => {
           try {
-            const changelog = await fetchSDKChangelog(sdk);
+            const {changelog, link} = await fetchSDKChangelog(sdk);
             return {
               sdk,
+              link,
               changelog,
               note: "This is the last 1000 lines of the CHANGELOG.md file. Analyze and summarize the relevant parts for the user's question."
             };
