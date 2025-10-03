@@ -360,7 +360,7 @@ export default function DemoPage() {
                 <h2 className="text-2xl font-semibold text-[#f8fafc] mb-4">Overview</h2>
                 <p className="text-[#cbd5e1] leading-relaxed mb-4">
                   LiveKit Agents supports text inputs and outputs in addition to audio, based on the{' '}
-                  <a href="#" className="text-blue-400 hover:text-blue-300">text streams</a> feature of the LiveKit SDKs. This guide explains what's possible and how to use it in your app.
+                  <a href="#" className="text-blue-400 hover:text-blue-300">text streams</a> feature of the LiveKit SDKs. This guide explains what&apos;s possible and how to use it in your app.
                 </p>
               </section>
 
