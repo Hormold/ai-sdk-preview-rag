@@ -81,4 +81,12 @@ export const SDK_SOURCES: Record<SDKName, SDKSource> = {
     url: "https://raw.githubusercontent.com/livekit/track-processors-js/main/CHANGELOG.md",
     type: 'changelog'
   },
+  [SDKName.LIVEKIT_SERVER]: {
+    url: "https://github.com/livekit/livekit/releases.atom",
+    type: 'releases_atom'
+  },
+  [SDKName.PROTOCOL]: {
+    url: "https://github.com/livekit/protocol/releases.atom",
+    type: 'releases_atom'
+  },
 };

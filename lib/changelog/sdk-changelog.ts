@@ -24,6 +24,8 @@ export enum SDKName {
   COMPONENTS_ANDROID = "Android Components",
   COMPONENTS_FLUTTER = "Flutter Components",
   TRACK_PROCESSORS_JS = "Track Processors JS",
+  LIVEKIT_SERVER = "LiveKit Server",
+  PROTOCOL = "Protocol",
 }
 
 export interface SDKSource {
