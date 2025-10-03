@@ -367,7 +367,7 @@ export default function DemoPage() {
               <section id="transcriptions" className="mb-12">
                 <h2 className="text-2xl font-semibold text-[#f8fafc] mb-4">Transcriptions</h2>
                 <p className="text-[#cbd5e1] leading-relaxed mb-4">
-                  When an agent performs STT as part of its processing pipeline, the transcriptions are also published to the frontend in realtime. Additionally, a text representation of the agent's speech is also published in sync with audio playback when the agent speaks. These features are both enabled by default when using <code className="bg-[#1a1a1b] text-[#f8fafc] px-2 py-1 rounded border border-[#333333]">AgentSession</code>.
+                  When an agent performs STT as part of its processing pipeline, the transcriptions are also published to the frontend in realtime. Additionally, a text representation of the agent&apos;s speech is also published in sync with audio playback when the agent speaks. These features are both enabled by default when using <code className="bg-[#1a1a1b] text-[#f8fafc] px-2 py-1 rounded border border-[#333333]">AgentSession</code>.
                 </p>
                 <p className="text-[#cbd5e1] leading-relaxed mb-4">
                   Transcriptions use the <code className="bg-[#1a1a1b] text-[#f8fafc] px-2 py-1 rounded border border-[#333333]">lk-transcription</code> text stream topic. They include a <code className="bg-[#1a1a1b] text-[#f8fafc] px-2 py-1 rounded border border-[#333333]">lk-transcribed_track_id</code> attribute and the sender identity is the transcribed participant.
@@ -405,7 +405,7 @@ export default function DemoPage() {
 
                 <h4 id="toggle-audio" className="text-lg font-semibold text-[#f8fafc] mb-3 mt-8">Toggle audio input and output</h4>
                 <p className="text-[#cbd5e1] leading-relaxed mb-4">
-                  You can dynamically toggle audio input and output during a session using the room's audio control methods.
+                  You can dynamically toggle audio input and output during a session using the room&apos;s audio control methods.
                 </p>
               </section>
 
@@ -417,7 +417,7 @@ export default function DemoPage() {
 
                 <h3 id="receiving-streams" className="text-xl font-semibold text-[#f8fafc] mb-3 mt-8">Receiving text streams</h3>
                 <p className="text-[#cbd5e1] leading-relaxed mb-4">
-                  Use the room's text stream API to receive and display text content in realtime.
+                  Use the room&apos;s text stream API to receive and display text content in realtime.
                 </p>
               </section>
             </div>
