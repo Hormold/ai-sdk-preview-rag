@@ -14,6 +14,11 @@ export function ReasoningPart({ part }: PartComponentProps) {
   const [elapsedTime, setElapsedTime] = useState(0);
   const startTimeRef = useRef<number | null>(null);
 
+  // Type guard for reasoning parts
+  if (part.type !== 'reasoning') {
+    return null;
+  }
+
   useEffect(() => {
     if (part.state === 'streaming') {
       startTimeRef.current = Date.now();

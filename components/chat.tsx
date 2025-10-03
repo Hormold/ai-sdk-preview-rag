@@ -9,6 +9,7 @@ import { CategoryFilter } from "./chat/CategoryFilter";
 import { MessageList } from "./chat/MessageList";
 import { ChatInput } from "./chat/ChatInput";
 import { saveChatToHistory, getChatById } from "./chat/utils/chat-history";
+import type { Message } from "./chat/types";
 
 interface ChatProps {
   onClose?: () => void;
@@ -144,7 +145,7 @@ export default function Chat({ onClose, onExpandChange, talkWithPage = false, pa
   const handleClear = () => {
     // Save current chat to history before clearing
     if (messages.length > 0) {
-      saveChatToHistory(messages);
+      saveChatToHistory(messages as Message[]);
     }
 
     setMessages([]);
@@ -157,7 +158,7 @@ export default function Chat({ onClose, onExpandChange, talkWithPage = false, pa
     if (chatMessages) {
       // Save current chat first if not empty
       if (messages.length > 0) {
-        saveChatToHistory(messages);
+        saveChatToHistory(messages as Message[]);
       }
 
       setMessages(chatMessages);
@@ -190,7 +191,7 @@ export default function Chat({ onClose, onExpandChange, talkWithPage = false, pa
       />
 
       <MessageList
-        messages={messages}
+        messages={messages as Message[]}
         status={status}
         messagesEndRef={messagesEndRef as RefObject<HTMLDivElement>}
         onFocusInput={() => inputRef.current?.focus()}

@@ -4,10 +4,20 @@ import { motion } from "framer-motion";
 import type { PartComponentProps } from "../types";
 
 export function RedirectPart({ part }: PartComponentProps) {
-  const data = part.result || part.output;
+  // Type guard for redirect tools
+  if (
+    part.type !== 'tool-redirectToDocs' &&
+    part.type !== 'tool-redirectToSlack' &&
+    part.type !== 'tool-redirectToExternalURL'
+  ) {
+    return null;
+  }
 
-  if ((part.state === 'result' || part.state === 'output-available') && data) {
-    const { url, description, type } = data;
+  if (part.state !== 'output-available') {
+    return null;
+  }
+
+  const { url, description, type } = part.output;
 
     const getIcon = () => {
       if (type === 'slack') {
@@ -49,9 +59,8 @@ export function RedirectPart({ part }: PartComponentProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </a>
-      </motion.div>
-    );
-  }
+    </motion.div>
+  );
 
   return null;
 }

@@ -16,6 +16,20 @@ export function ToolInvocationPart({ part }: PartComponentProps) {
   const [elapsedTime, setElapsedTime] = useState(0);
   const startTimeRef = useRef<number | null>(null);
 
+  // Type guard - only handle specific tool types
+  if (
+    part.type !== 'tool-getInformation' &&
+    part.type !== 'tool-getFullDocument' &&
+    part.type !== 'tool-getSDKChangelog'
+  ) {
+    return null;
+  }
+
+  // Additional type guard to ensure we have state property
+  if (!('state' in part)) {
+    return null;
+  }
+
   useEffect(() => {
     if (part.state === 'input-streaming' || part.state === 'input-available') {
       if (!startTimeRef.current) {
@@ -30,10 +44,10 @@ export function ToolInvocationPart({ part }: PartComponentProps) {
     }
   }, [part.state]);
 
-  const isSearchTool = part.type === 'tool-knowledgeSearch' || part.type === 'tool-getInformation';
+  const isSearchTool = part.type === 'tool-getInformation';
   const isDocumentTool = part.type === 'tool-getFullDocument';
   const isChangelogTool = part.type === 'tool-getSDKChangelog';
-  const searchQuery = part.input?.question || part.input?.similarQuestions?.[0];
+  const searchQuery = isSearchTool && (part.input?.question || part.input?.similarQuestions?.[0]);
 
   switch (part.state) {
     case 'input-streaming':
@@ -59,11 +73,11 @@ export function ToolInvocationPart({ part }: PartComponentProps) {
       );
 
     case 'output-available':
-      const documentTitle = part.input?.title;
-      const sdkName = part.input?.sdk;
+      const documentTitle = isDocumentTool ? part.input?.title : undefined;
+      const sdkName = isChangelogTool ? part.input?.sdk : undefined;
       const timeTaken = elapsedTime > 0 ? `${elapsedTime}s` : '';
 
-      const toolData = part.result || part.output;
+      const toolData = 'output' in part ? part.output : null;
       const sources = toolData && Array.isArray(toolData)
         ? toolData
             .filter((r: any) => r.sourceUrl && r.sourceTitle)
@@ -74,7 +88,7 @@ export function ToolInvocationPart({ part }: PartComponentProps) {
         : [];
 
       if (isDocumentTool) {
-        const documentUrl = toolData?.sourceUrl;
+        const documentUrl = toolData && typeof toolData === 'object' && !Array.isArray(toolData) && 'sourceUrl' in toolData ? (toolData as any).sourceUrl : null;
         return (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -181,7 +195,7 @@ export function ToolInvocationPart({ part }: PartComponentProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
             <span className="text-red-400 text-xs font-medium">
-              Error: {part.errorText}
+              Error: {'errorText' in part ? part.errorText : 'Unknown error'}
             </span>
           </div>
         </motion.div>

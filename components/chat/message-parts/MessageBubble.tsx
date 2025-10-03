@@ -13,7 +13,6 @@ import type { MessageBubbleProps } from "../types";
 import { CodeBlockPart } from "./CodeBlockPart";
 import { RedirectPart } from "./RedirectPart";
 import { ToolInvocationPart } from "./ToolInvocationPart";
-import { UnderstandQueryPart } from "./UnderstandQueryPart";
 import { ReasoningPart } from "./ReasoningPart";
 import { TesterPart } from "./TesterPart";
 
@@ -122,9 +121,7 @@ export function MessageBubble({ message, allMessages }: MessageBubbleProps) {
           case 'tool-getSDKChangelog':
             return <ToolInvocationPart key={index} part={part} />;
 
-          case 'tool-understandQuery':
-            return <UnderstandQueryPart key={index} part={part} />;
-
+    
           case 'step-start':
             return null;
 

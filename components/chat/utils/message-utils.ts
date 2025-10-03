@@ -55,10 +55,6 @@ export function getToolLabel(type: string): string {
   switch (type) {
     case 'tool-getInformation':
       return 'Searching knowledge base';
-    case 'tool-addResource':
-      return 'Adding resource';
-    case 'tool-understandQuery':
-      return 'Understanding query';
     case 'tool-knowledgeSearch':
       return 'Searching documents';
     case 'tool-getFullDocument':

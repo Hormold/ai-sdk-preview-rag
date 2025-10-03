@@ -17,8 +17,9 @@ export function convertMessagesToPreview(messages: Message[]): ChatPreview["mess
     if (msg.role === "user" || msg.role === "assistant") {
       // Extract only text parts
       const textParts = msg.parts
-        .filter((part) => part.type === "text" && part.text?.trim())
-        .map((part) => part.text!)
+        .filter((part) => part.type === "text")
+        .map((part) => ('text' in part ? part.text : ''))
+        .filter(text => text?.trim())
         .join(" ");
 
       if (textParts) {
@@ -43,7 +44,9 @@ function isSameChat(messages1: Message[], messages2: Message[]): boolean {
 
     return msg1.parts.every((part1, pIdx) => {
       const part2 = msg2.parts[pIdx];
-      return part1.type === part2.type && part1.text === part2.text;
+      const text1 = 'text' in part1 ? part1.text : undefined;
+      const text2 = 'text' in part2 ? part2.text : undefined;
+      return part1.type === part2.type && text1 === text2;
     });
   });
 }
@@ -91,6 +94,7 @@ export function getChatHistory(): ChatPreview[] {
     return parsed.map((chat: any) => ({
       ...chat,
       timestamp: new Date(chat.timestamp),
+      fullMessages: chat.fullMessages as Message[],
     }));
   } catch (e) {
     console.error("Failed to load chat history", e);

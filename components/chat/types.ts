@@ -1,21 +1,12 @@
-export interface MessagePart {
-  type: string;
-  text?: string;
-  state?: string;
-  input?: any;
-  output?: any;
-  result?: any;
-  toolCallId?: string;
-  callProviderMetadata?: any;
-  providerMetadata?: any;
-  errorText?: string;
-}
+import type { UIMessage, InferUITools } from "ai";
+import type { ChatTools, ChatDataTypes } from "@/lib/ai/tools";
 
-export interface Message {
-  id: string;
-  role: "user" | "assistant" | "system";
-  parts: MessagePart[];
-}
+// Infer UI tool types from ChatTools
+export type ChatUITools = InferUITools<ChatTools>;
+
+// Create typed UIMessage with our tools and data types
+export type Message = UIMessage<unknown, ChatDataTypes, ChatUITools>;
+export type MessagePart = Message['parts'][number];
 
 export interface MessageListProps {
   messages: Message[];
