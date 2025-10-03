@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ThumbsUp, ThumbsDown, Copy } from "lucide-react";
 import { toast } from "sonner";
@@ -20,15 +20,22 @@ import { TesterPart } from "./TesterPart";
 export function MessageBubble({ message, allMessages }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const { feedbackGiven, handleFeedback } = useFeedback(allMessages);
+  const [feedbackPerPart, setFeedbackPerPart] = useState<Set<number>>(new Set());
 
   const reorderedParts = useMemo(() =>
     reorderMessageParts(message.parts, isUser),
     [message.parts, isUser]
   );
 
+  const handlePartFeedback = (partIndex: number, type: 'positive' | 'negative') => {
+    setFeedbackPerPart(prev => new Set(prev).add(partIndex));
+    handleFeedback(type);
+  };
+
   return (
     <div className="space-y-2">
       {reorderedParts.map((part: any, index: number) => {
+        const partFeedbackGiven = feedbackPerPart.has(index);
         switch (part.type) {
           case 'text':
             if(!part.text || part.text.trim() === '') {
@@ -71,18 +78,18 @@ export function MessageBubble({ message, allMessages }: MessageBubbleProps) {
                       >
                         <Copy className="h-4 w-4" />
                       </Action>
-                      {!feedbackGiven ? (
+                      {!partFeedbackGiven ? (
                         <>
                           <Action
                             tooltip="Good response"
-                            onClick={() => handleFeedback('positive')}
+                            onClick={() => handlePartFeedback(index, 'positive')}
                             className="text-[#64748b] hover:text-[#22c55e] hover:bg-[#1a1a1a]"
                           >
                             <ThumbsUp className="h-4 w-4" />
                           </Action>
                           <Action
                             tooltip="Bad response"
-                            onClick={() => handleFeedback('negative')}
+                            onClick={() => handlePartFeedback(index, 'negative')}
                             className="text-[#64748b] hover:text-[#ef4444] hover:bg-[#1a1a1a]"
                           >
                             <ThumbsDown className="h-4 w-4" />
