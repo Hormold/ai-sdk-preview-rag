@@ -4,6 +4,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { Clock } from "lucide-react";
+import { ChatHistoryPopup } from "./ChatHistoryPopup";
 
 interface ChatHeaderProps {
   model: "low" | "high";
@@ -14,6 +16,7 @@ interface ChatHeaderProps {
   onClose?: () => void;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
+  onRestoreChat?: (chatId: string) => void;
 }
 
 export function ChatHeader({
@@ -25,12 +28,21 @@ export function ChatHeader({
   onClose,
   isExpanded,
   onToggleExpand,
+  onRestoreChat,
 }: ChatHeaderProps) {
   const [showModelMenu, setShowModelMenu] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   const handleClear = () => {
     onClear();
     toast.success("Chat history cleared");
+  };
+
+  const handleSelectChat = (chatId: string) => {
+    if (onRestoreChat) {
+      onRestoreChat(chatId);
+      toast.success("Chat restored");
+    }
   };
 
   return (
@@ -51,7 +63,7 @@ export function ChatHeader({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 relative">
             {onToggleExpand && (
               <button
                 onClick={onToggleExpand}
@@ -69,6 +81,20 @@ export function ChatHeader({
                 )}
               </button>
             )}
+            <div className="relative">
+              <button
+                onClick={() => setShowHistory(true)}
+                className="p-1.5 text-[#999999] hover:text-white transition-colors outline-none focus:outline-none"
+                title="Chat history"
+              >
+                <Clock className="w-4 h-4" />
+              </button>
+              <ChatHistoryPopup
+                isOpen={showHistory}
+                onClose={() => setShowHistory(false)}
+                onSelectChat={handleSelectChat}
+              />
+            </div>
             <button
               onClick={handleClear}
               className="p-1.5 text-[#999999] hover:text-white transition-colors outline-none focus:outline-none"

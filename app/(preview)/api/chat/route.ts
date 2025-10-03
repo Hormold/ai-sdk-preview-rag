@@ -7,12 +7,6 @@ import { fetchSDKChangelog, SDKName, getAvailableSDKs } from "@/lib/changelog/sd
 import { searchFAQCache } from "@/lib/faq/faq-cache";
 import { getSystemPrompt } from "@/lib/ai/system-prompts";
 
-export const codeBlockSchema = z.object({
-  language: z.string(),
-  filename: z.string(),
-  code: z.string(),
-});
-
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 

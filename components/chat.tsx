@@ -8,6 +8,7 @@ import { ChatHeader } from "./chat/ChatHeader";
 import { CategoryFilter } from "./chat/CategoryFilter";
 import { MessageList } from "./chat/MessageList";
 import { ChatInput } from "./chat/ChatInput";
+import { saveChatToHistory, getChatById } from "./chat/utils/chat-history";
 
 interface ChatProps {
   onClose?: () => void;
@@ -25,7 +26,13 @@ export default function Chat({ onClose, onExpandChange, talkWithPage = false, pa
   const [categories, setCategories] = useState<Array<{ name: string; count: number }>>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [isExpanded, setIsExpanded] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem("chat-expanded");
+      return saved === "true";
+    }
+    return false;
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -96,10 +103,6 @@ export default function Chat({ onClose, onExpandChange, talkWithPage = false, pa
       setReasoningEffort(savedEffort as "low" | "medium" | "high");
     }
 
-    const savedExpanded = localStorage.getItem("chat-expanded");
-    if (savedExpanded) {
-      setIsExpanded(savedExpanded === "true");
-    }
 
     // Fetch available categories
     fetch("/api/categories")
@@ -139,9 +142,32 @@ export default function Chat({ onClose, onExpandChange, talkWithPage = false, pa
   }, [messages]);
 
   const handleClear = () => {
+    // Save current chat to history before clearing
+    if (messages.length > 0) {
+      saveChatToHistory(messages);
+    }
+
     setMessages([]);
     localStorage.removeItem("chat-messages");
     setError(null);
+  };
+
+  const handleRestoreChat = (chatId: string) => {
+    const chatMessages = getChatById(chatId);
+    if (chatMessages) {
+      // Save current chat first if not empty
+      if (messages.length > 0) {
+        saveChatToHistory(messages);
+      }
+
+      setMessages(chatMessages);
+      localStorage.setItem("chat-messages", JSON.stringify(chatMessages));
+
+      // Force scroll after messages render
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    }
   };
 
   const handleSubmit = () => {
@@ -160,6 +186,7 @@ export default function Chat({ onClose, onExpandChange, talkWithPage = false, pa
         onClose={onClose}
         isExpanded={isExpanded}
         onToggleExpand={() => setIsExpanded(!isExpanded)}
+        onRestoreChat={handleRestoreChat}
       />
 
       <MessageList
