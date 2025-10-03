@@ -2,7 +2,7 @@
 
 import { forwardRef, useState, useEffect, useRef } from "react";
 import { Textarea } from "@/components/ui/textarea";
-import { MicIcon, ArrowUpIcon, SquareIcon } from "lucide-react";
+import { MicIcon, ArrowUpIcon, SquareIcon, BrainIcon, Sparkles, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
@@ -14,12 +14,30 @@ interface ChatInputProps {
   disabled: boolean;
   isStreaming?: boolean;
   renderFilter?: () => React.ReactNode;
+  model?: "low" | "high";
+  reasoningEffort?: "low" | "medium" | "high";
+  onModelChange?: (model: "low" | "high") => void;
+  onReasoningChange?: (effort: "low" | "medium" | "high") => void;
 }
 
 export const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(
-  function ChatInput({ value, onChange, onSubmit, onStop, disabled, isStreaming, renderFilter }, ref) {
+  function ChatInput({
+    value,
+    onChange,
+    onSubmit,
+    onStop,
+    disabled,
+    isStreaming,
+    renderFilter,
+    model = "high",
+    reasoningEffort = "medium",
+    onModelChange,
+    onReasoningChange
+  }, ref) {
     const [isListening, setIsListening] = useState(false);
+    const [showModelDropdown, setShowModelDropdown] = useState(false);
     const recognitionRef = useRef<any>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
       // Initialize Web Speech API
@@ -59,6 +77,17 @@ export const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(
       };
     }, [value, onChange]);
 
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+          setShowModelDropdown(false);
+        }
+      };
+
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     const toggleListening = () => {
       if (!recognitionRef.current) {
         alert('Speech recognition is not supported in your browser');
@@ -89,6 +118,22 @@ export const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(
       }
     };
 
+    const cycleReasoningEffort = () => {
+      const cycle: Array<"low" | "medium" | "high"> = ["low", "medium", "high"];
+      const currentIndex = cycle.indexOf(reasoningEffort);
+      const nextIndex = (currentIndex + 1) % cycle.length;
+      onReasoningChange?.(cycle[nextIndex]);
+    };
+
+    const getReasoningDots = () => {
+      switch (reasoningEffort) {
+        case "low": return 1;
+        case "medium": return 2;
+        case "high": return 3;
+        default: return 2;
+      }
+    };
+
     return (
       <form onSubmit={handleSubmit} className="relative">
         <div className="relative bg-[#1a1a1b] border border-[#333333] rounded-2xl px-4 py-3 focus-within:border-[#1FD5F9] transition-colors">
@@ -105,6 +150,98 @@ export const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 
           <div className="flex items-center justify-between mt-2">
             <div className="flex items-center gap-2">
+              {/* Model Selector */}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setShowModelDropdown(!showModelDropdown)}
+                  className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#1a1a1a] border border-[#333333] text-[#94a3b8] hover:text-white hover:border-[#1FD5F9]/50 transition-colors text-xs"
+                  title="Select model"
+                >
+                  {model === "high" ? (
+                    <Sparkles className="w-3.5 h-3.5" />
+                  ) : (
+                    <Zap className="w-3.5 h-3.5" />
+                  )}
+                  <span>{model === "high" ? "Smart" : "Fast"}</span>
+                  <svg
+                    className={cn("w-3 h-3 transition-transform", showModelDropdown && "rotate-180")}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {showModelDropdown && (
+                  <div className="absolute bottom-full left-0 mb-2 bg-[#1a1a1a] border border-[#333333] rounded-lg shadow-lg overflow-hidden min-w-[140px] z-50">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onModelChange?.("high");
+                        setShowModelDropdown(false);
+                      }}
+                      className={cn(
+                        "w-full text-left px-3 py-2 text-xs transition-colors flex items-center gap-2",
+                        model === "high"
+                          ? "bg-[#1FD5F9]/20 text-[#1FD5F9]"
+                          : "text-[#94a3b8] hover:bg-[#2a2a2a] hover:text-white"
+                      )}
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      Smart
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onModelChange?.("low");
+                        setShowModelDropdown(false);
+                      }}
+                      className={cn(
+                        "w-full text-left px-3 py-2 text-xs transition-colors flex items-center gap-2",
+                        model === "low"
+                          ? "bg-[#1FD5F9]/20 text-[#1FD5F9]"
+                          : "text-[#94a3b8] hover:bg-[#2a2a2a] hover:text-white"
+                      )}
+                    >
+                      <Zap className="w-3 h-3" />
+                      Fast
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Reasoning Effort */}
+              <button
+                type="button"
+                onClick={cycleReasoningEffort}
+                className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#1a1a1a] border border-[#333333] hover:border-[#1FD5F9]/50 transition-colors group"
+                title={`Reasoning: ${reasoningEffort}`}
+              >
+                <BrainIcon
+                  className={cn(
+                    "w-4 h-4 transition-colors group-hover:text-white",
+                    reasoningEffort === "low" && "text-[#94a3b8]",
+                    reasoningEffort === "medium" && "text-[#1FD5F9]/60",
+                    reasoningEffort === "high" && "text-[#1FD5F9]"
+                  )}
+                />
+                <div className="flex gap-0.5">
+                  {[1, 2, 3].map((dot) => (
+                    <div
+                      key={dot}
+                      className={cn(
+                        "w-1.5 h-1.5 rounded-full transition-colors",
+                        dot <= getReasoningDots()
+                          ? "bg-[#1FD5F9]"
+                          : "bg-[#333333]"
+                      )}
+                    />
+                  ))}
+                </div>
+              </button>
+
               {renderFilter && renderFilter()}
               <button
                 type="button"

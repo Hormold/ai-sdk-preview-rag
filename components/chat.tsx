@@ -261,6 +261,10 @@ export default function Chat({ onClose, onExpandChange, talkWithPage = false, pa
           onStop={stop}
           disabled={status === "submitted"}
           isStreaming={status === "streaming"}
+          model={model}
+          reasoningEffort={reasoningEffort}
+          onModelChange={setModel}
+          onReasoningChange={setReasoningEffort}
           renderFilter={() => (
             <CategoryFilter
               categories={categories}
