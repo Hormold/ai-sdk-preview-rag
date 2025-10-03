@@ -16,22 +16,13 @@ export function ToolInvocationPart({ part }: PartComponentProps) {
   const [elapsedTime, setElapsedTime] = useState(0);
   const startTimeRef = useRef<number | null>(null);
 
-  // Type guard - only handle specific tool types
-  if (
-    part.type !== 'tool-getInformation' &&
-    part.type !== 'tool-getFullDocument' &&
-    part.type !== 'tool-getSDKChangelog'
-  ) {
-    return null;
-  }
-
-  // Additional type guard to ensure we have state property
-  if (!('state' in part)) {
-    return null;
-  }
+  const isRelevantTool = 
+    part.type === 'tool-getInformation' ||
+    part.type === 'tool-getFullDocument' ||
+    part.type === 'tool-getSDKChangelog';
 
   useEffect(() => {
-    if (part.state === 'input-streaming' || part.state === 'input-available') {
+    if (isRelevantTool && 'state' in part && (part.state === 'input-streaming' || part.state === 'input-available')) {
       if (!startTimeRef.current) {
         startTimeRef.current = Date.now();
       }
@@ -42,7 +33,17 @@ export function ToolInvocationPart({ part }: PartComponentProps) {
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [part.state]);
+  }, [isRelevantTool, part]);
+
+  // Type guard - only handle specific tool types
+  if (!isRelevantTool) {
+    return null;
+  }
+
+  // Additional type guard to ensure we have state property
+  if (!('state' in part)) {
+    return null;
+  }
 
   const isSearchTool = part.type === 'tool-getInformation';
   const isDocumentTool = part.type === 'tool-getFullDocument';

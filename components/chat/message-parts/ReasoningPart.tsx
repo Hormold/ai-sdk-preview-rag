@@ -14,13 +14,8 @@ export function ReasoningPart({ part }: PartComponentProps) {
   const [elapsedTime, setElapsedTime] = useState(0);
   const startTimeRef = useRef<number | null>(null);
 
-  // Type guard for reasoning parts
-  if (part.type !== 'reasoning') {
-    return null;
-  }
-
   useEffect(() => {
-    if (part.state === 'streaming') {
+    if (part.type === 'reasoning' && 'state' in part && part.state === 'streaming') {
       startTimeRef.current = Date.now();
       const interval = setInterval(() => {
         if (startTimeRef.current) {
@@ -29,7 +24,12 @@ export function ReasoningPart({ part }: PartComponentProps) {
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [part.state]);
+  }, [part]);
+
+  // Type guard for reasoning parts
+  if (part.type !== 'reasoning') {
+    return null;
+  }
 
   if (part.state === 'streaming') {
     return (
