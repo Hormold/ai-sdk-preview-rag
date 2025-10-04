@@ -8,14 +8,8 @@ const randomId = () => {
 
 export async function POST(request: NextRequest) {
   try {
-    const { identity, name, pageUrl } = await request.json();
+    const { name, pageUrl } = await request.json();
 
-    if (!identity) {
-      return NextResponse.json(
-        { error: 'Identity is required' },
-        { status: 400 }
-      );
-    }
 
     const apiKey = process.env.LIVEKIT_API_KEY;
     const apiSecret = process.env.LIVEKIT_API_SECRET;
@@ -29,10 +23,12 @@ export async function POST(request: NextRequest) {
     }
 
     const roomName = `livekit-demo-${randomId()}`;
+    const userIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
 
     const at = new AccessToken(apiKey, apiSecret, {
-      identity,
+      identity: randomId(),
       name: name || randomId(),
+      metadata: JSON.stringify({ userIp, pageUrl }),
     });
 
     at.addGrant({

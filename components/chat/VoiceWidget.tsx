@@ -6,6 +6,7 @@ import { RpcInvocationData } from "livekit-client";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { MicOff, Phone, PhoneOff, Volume2 } from "lucide-react";
+import { useHistory } from "@/providers/history";
 
 interface VoiceWidgetProps {
   agentUrl?: string;
@@ -74,10 +75,10 @@ function VoiceControls() {
       }
     ];
 
-    // Use room.registerRpcMethod (new API)
+    // Register RPC methods using room API (not deprecated)
     const methodNames: string[] = [];
     rpcMethods.forEach(({ name, handler }) => {
-      room.localParticipant?.registerRpcMethod(name, handler);
+      room.registerRpcMethod(name, handler);
       methodNames.push(name);
     });
 
@@ -88,10 +89,10 @@ function VoiceControls() {
       startAudio().catch(console.error);
     }
 
-    // Use room.unregisterRpcMethod for cleanup (new API)
+    // Cleanup RPC methods
     return () => {
       methodNames.forEach(name => {
-        room.localParticipant?.unregisterRpcMethod(name);
+        room.unregisterRpcMethod(name);
       });
     };
   }, [localParticipant, room, router, canPlayAudio, startAudio]);
@@ -198,17 +199,21 @@ export function VoiceWidget({ agentUrl, videoSrc = "/loop.webm" }: VoiceWidgetPr
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const { history } = useHistory();
 
   const fetchToken = async () => {
     setIsLoading(true);
+
+    // Get last user history from next pages
 
     try {
       const response = await fetch('/api/livekit-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          identity: `user-${Date.now()}`,
-          name: 'Guest User'
+          pageUrl: window.location.href,
+          browserHistory: history,
+          pageTitle: document.title,
         })
       });
 
