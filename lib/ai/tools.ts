@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { findRelevantContent, getFullDocument } from "@/lib/ai/embedding";
 import { fetchSDKChangelog, SDKName } from "@/lib/changelog/sdk-changelog";
+import { getLibs, libs } from "./context7";
 
 export const createChatTools = (selectedCategories?: string[]) => ({
   redirectToDocs: tool({
@@ -76,6 +77,19 @@ export const createChatTools = (selectedCategories?: string[]) => ({
       return document;
     },
   }),
+
+  askRepo: tool({
+    description: `Search repository for information.`,
+    inputSchema: z.object({
+      libName: z.enum(Object.keys(libs)).describe("the lib name to fetch"),
+      question: z.string().describe("the question to search the repository for"),
+    }),
+    execute: async ({ libName, question }) => {
+      const libs = await getLibs(libName, question);
+      return libs;
+    },
+  }),
+  
   getSDKChangelog: tool({
     description: `Fetch the changelog (release notes) for a specific LiveKit SDK. Returns the last 1000 lines of the CHANGELOG.md file, which includes recent versions and changes. Use this when users ask about SDK versions, what's new, breaking changes, or release history.`,
     inputSchema: z.object({

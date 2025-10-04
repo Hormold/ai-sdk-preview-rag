@@ -119,6 +119,7 @@ export function MessageBubble({ message, allMessages }: MessageBubbleProps) {
           case 'tool-knowledgeSearch':
           case 'tool-getFullDocument':
           case 'tool-getSDKChangelog':
+          case 'tool-askRepo':
             return <ToolInvocationPart key={index} part={part} />;
 
     

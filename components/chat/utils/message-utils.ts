@@ -61,6 +61,8 @@ export function getToolLabel(type: string): string {
       return 'Reading documentation';
     case 'tool-getSDKChangelog':
       return 'Exploring changelog';
+    case 'tool-askRepo':
+      return 'Exploring repository';
     default:
       return 'Processing';
   }

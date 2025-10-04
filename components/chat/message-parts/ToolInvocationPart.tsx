@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { SearchIcon, BookOpenIcon, SettingsIcon } from "lucide-react";
+import { SearchIcon, BookOpenIcon, SettingsIcon, MessageCircleWarning } from "lucide-react";
 import {
   ChainOfThought,
   ChainOfThoughtContent,
@@ -19,7 +19,8 @@ export function ToolInvocationPart({ part }: PartComponentProps) {
   const isRelevantTool = 
     part.type === 'tool-getInformation' ||
     part.type === 'tool-getFullDocument' ||
-    part.type === 'tool-getSDKChangelog';
+    part.type === 'tool-getSDKChangelog' ||
+    part.type === 'tool-askRepo';
 
   useEffect(() => {
     if (isRelevantTool && 'state' in part && (part.state === 'input-streaming' || part.state === 'input-available')) {
@@ -48,9 +49,30 @@ export function ToolInvocationPart({ part }: PartComponentProps) {
   const isSearchTool = part.type === 'tool-getInformation';
   const isDocumentTool = part.type === 'tool-getFullDocument';
   const isChangelogTool = part.type === 'tool-getSDKChangelog';
+  const isRepoTool = part.type === 'tool-askRepo';
   const searchQuery = isSearchTool && (part.input?.question || part.input?.similarQuestions?.[0]);
 
   switch (part.state) {
+
+    case 'output-error':
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex justify-start"
+        >
+          <div className="not-prose max-w-prose">
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <MessageCircleWarning className="size-4" />
+              <span className="flex-1">
+                Error while calling internal tools... 
+              </span>
+            </div>
+          </div>
+        </motion.div>
+      );
+
+
     case 'input-streaming':
     case 'input-available':
       return (
@@ -72,10 +94,12 @@ export function ToolInvocationPart({ part }: PartComponentProps) {
           </div>
         </motion.div>
       );
+      
 
     case 'output-available':
       const documentTitle = isDocumentTool ? part.input?.title : undefined;
       const sdkName = isChangelogTool ? part.input?.sdk : undefined;
+      const libName = isRepoTool ? part.input?.libName : undefined;
       const timeTaken = elapsedTime > 0 ? `${elapsedTime}s` : '';
 
       const toolData = 'output' in part ? part.output : null;
@@ -128,6 +152,23 @@ export function ToolInvocationPart({ part }: PartComponentProps) {
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
                 <SettingsIcon className="size-4" />
                 <span className="flex-1">Exploring changelog «{sdkName}»</span>
+              </div>
+            </div>
+          </motion.div>
+        );
+      }
+
+      if (isRepoTool) {
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex justify-start"
+          >
+            <div className="not-prose max-w-prose">
+              <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                <BookOpenIcon className="size-4" />
+                <span className="flex-1">Exploring repository «{libName}»</span>
               </div>
             </div>
           </motion.div>

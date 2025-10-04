@@ -147,12 +147,12 @@ export default function Chat({ onClose, onExpandChange, talkWithPage = false, pa
     }
   }, [status]);
 
-  // Auto-scroll to bottom when messages change, but only if user hasn't scrolled
+  // Auto-scroll to bottom when messages change, but only during streaming and if user hasn't scrolled
   useEffect(() => {
-    if (!userHasScrolled) {
+    if (!userHasScrolled && (status === 'streaming' || status === 'submitted')) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, userHasScrolled]);
+  }, [messages, userHasScrolled, status]);
 
   // Detect user scroll during streaming
   useEffect(() => {

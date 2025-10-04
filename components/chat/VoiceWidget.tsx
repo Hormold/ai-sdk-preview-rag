@@ -173,14 +173,17 @@ function VoiceRoomContent({ onClose, videoSrc }: { onClose: () => void; videoSrc
       </motion.div>
 
       {/* Disconnect Button */}
-      <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
+      <button
         onClick={onClose}
-        className="mt-2 p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-full border border-red-500/50 shadow-lg transition-all z-10"
+        className="mt-3 group px-4 py-2 bg-gradient-to-br from-[#0f0f10] to-[#1a1a1b] border border-[#262626] rounded-xl hover:border-[#3b3b3b] hover:shadow-lg hover:shadow-red-500/10 transition-all duration-200"
       >
-        <PhoneOff className="w-4 h-4" />
-      </motion.button>
+        <div className="flex items-center gap-2">
+          <PhoneOff className="w-4 h-4 text-[#94a3b8] group-hover:text-[#cbd5e1] transition-colors" />
+          <span className="text-[#94a3b8] text-sm font-medium group-hover:text-[#cbd5e1] transition-colors">
+            End call
+          </span>
+        </div>
+      </button>
 
       <motion.p
         initial={{ opacity: 0, y: 10 }}
