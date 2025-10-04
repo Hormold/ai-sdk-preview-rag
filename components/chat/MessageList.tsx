@@ -1,12 +1,14 @@
 "use client";
 
+import { forwardRef } from "react";
 import { MessageBubble, LoadingIndicator } from "./message-parts";
 import { EmptyState } from "./EmptyState";
 import type { MessageListProps } from "./types";
 
-export function MessageList({ messages, status, messagesEndRef, onFocusInput }: MessageListProps) {
-  return (
-    <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
+export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
+  ({ messages, status, messagesEndRef, onFocusInput }, ref) => {
+    return (
+      <div ref={ref} className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
       {messages.length === 0 ? (
         <EmptyState onFocusInput={onFocusInput} />
       ) : (
@@ -26,4 +28,6 @@ export function MessageList({ messages, status, messagesEndRef, onFocusInput }: 
       )}
     </div>
   );
-}
+});
+
+MessageList.displayName = "MessageList";

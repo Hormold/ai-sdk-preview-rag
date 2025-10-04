@@ -22,8 +22,20 @@ interface ChatProps {
 
 export default function Chat({ onClose, onExpandChange, talkWithPage = false, pageTitle, pageUrl, onDisableTalkWithPage }: ChatProps = {}) {
   const [input, setInput] = useState<string>("");
-  const [model, setModel] = useState<"low" | "high">("low");
-  const [reasoningEffort, setReasoningEffort] = useState<"low" | "medium" | "high">("low");
+  const [model, setModel] = useState<"low" | "high">(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem("chat-model");
+      return (saved as "low" | "high") || "low";
+    }
+    return "low";
+  });
+  const [reasoningEffort, setReasoningEffort] = useState<"low" | "medium" | "high">(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem("chat-reasoning-effort");
+      return (saved as "low" | "medium" | "high") || "low";
+    }
+    return "low";
+  });
   const [categories, setCategories] = useState<Array<{ name: string; count: number }>>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -34,8 +46,10 @@ export default function Chat({ onClose, onExpandChange, talkWithPage = false, pa
     }
     return false;
   });
+  const [userHasScrolled, setUserHasScrolled] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const modelRef = useRef(model);
   const effortRef = useRef(reasoningEffort);
@@ -94,17 +108,6 @@ export default function Chat({ onClose, onExpandChange, talkWithPage = false, pa
       }
     }
 
-    const savedModel = localStorage.getItem("chat-model");
-    if (savedModel) {
-      setModel(savedModel as "low" | "high");
-    }
-
-    const savedEffort = localStorage.getItem("chat-reasoning-effort");
-    if (savedEffort) {
-      setReasoningEffort(savedEffort as "low" | "medium" | "high");
-    }
-
-
     // Fetch available categories
     fetch("/api/categories")
       .then((res) => res.json())
@@ -137,10 +140,48 @@ export default function Chat({ onClose, onExpandChange, talkWithPage = false, pa
     }
   }, [isExpanded, onExpandChange]);
 
-  // Auto-scroll to bottom when messages change
+  // Reset userHasScrolled when streaming stops
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (status !== 'streaming') {
+      setUserHasScrolled(false);
+    }
+  }, [status]);
+
+  // Auto-scroll to bottom when messages change, but only if user hasn't scrolled
+  useEffect(() => {
+    if (!userHasScrolled) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, userHasScrolled]);
+
+  // Detect user scroll during streaming
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    let lastScrollTop = container.scrollTop;
+
+    const handleScroll = () => {
+      if (status === 'streaming') {
+        const currentScrollTop = container.scrollTop;
+        const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+
+        // If user scrolled up (even slightly), disable auto-scroll
+        if (currentScrollTop < lastScrollTop && !userHasScrolled) {
+          setUserHasScrolled(true);
+        }
+        // Re-enable only when explicitly at bottom
+        else if (isAtBottom && userHasScrolled) {
+          setUserHasScrolled(false);
+        }
+
+        lastScrollTop = currentScrollTop;
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [status, userHasScrolled]);
 
   const handleClear = () => {
     // Save current chat to history before clearing
@@ -191,6 +232,7 @@ export default function Chat({ onClose, onExpandChange, talkWithPage = false, pa
       />
 
       <MessageList
+        ref={messagesContainerRef}
         messages={messages as Message[]}
         status={status}
         messagesEndRef={messagesEndRef as RefObject<HTMLDivElement>}

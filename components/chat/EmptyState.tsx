@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { VoiceWidget } from "./VoiceWidget";
 
 interface EmptyStateProps {
   onFocusInput?: () => void;
@@ -10,7 +11,7 @@ interface EmptyStateProps {
 export function EmptyState({ onFocusInput }: EmptyStateProps) {
   return (
     <div className="flex items-center justify-center h-full">
-      <div className="text-center max-w-2xl mx-auto space-y-10">
+      <div className="text-center max-w-2xl mx-auto space-y-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -33,6 +34,8 @@ export function EmptyState({ onFocusInput }: EmptyStateProps) {
             </h2>
             <p className="text-[#64748b] text-base">Ask me anything about LiveKit integration, SDKs and other LiveKit topics</p>
           </div>
+
+          <VoiceWidget />
         </motion.div>
 
         <motion.div
@@ -42,13 +45,13 @@ export function EmptyState({ onFocusInput }: EmptyStateProps) {
           className="flex flex-wrap gap-3 justify-center"
         >
           <button onClick={onFocusInput} className="group px-5 py-3 bg-gradient-to-br from-[#0f0f10] to-[#1a1a1b] border border-[#262626] rounded-xl hover:border-[#3b3b3b] hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200 text-left">
-            <div className="text-[#94a3b8] text-sm font-medium group-hover:text-[#cbd5e1] group-hover:translate-x-0.5 transition-all">
+            <div className="text-[#94a3b8] text-sm font-medium group-hover:text-[#cbd5e1] transition-colors">
               Help with LiveKit integration
             </div>
           </button>
 
           <button onClick={onFocusInput} className="group px-5 py-3 bg-gradient-to-br from-[#0f0f10] to-[#1a1a1b] border border-[#262626] rounded-xl hover:border-[#3b3b3b] hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-200 text-left">
-            <div className="text-[#94a3b8] text-sm font-medium group-hover:text-[#cbd5e1] group-hover:translate-x-0.5 transition-all">
+            <div className="text-[#94a3b8] text-sm font-medium group-hover:text-[#cbd5e1] transition-colors">
               What&apos;s new in SDKs?
             </div>
           </button>

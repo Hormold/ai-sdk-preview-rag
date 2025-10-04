@@ -1,13 +1,15 @@
 import { createResource } from "@/lib/actions/resources";
 import { findRelevantContent, getFullDocument, findDocumentByUrl } from "@/lib/ai/embedding";
 import { BIG_AGENT_MODEL, SMALL_AGENT_MODEL, SUB_AGENT_MODEL } from "@/lib/constants";
-import { convertToModelMessages, generateObject, stepCountIs, streamText, tool, UIMessage } from "ai";
+import { convertToModelMessages, experimental_createMCPClient, generateObject, stepCountIs, streamText, tool, UIMessage } from "ai";
 import { z } from "zod";
-import { fetchSDKChangelog, SDKName, getAvailableSDKs } from "@/lib/changelog/sdk-changelog";
+import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { searchFAQCache } from "@/lib/faq/faq-cache";
 import { getSystemPrompt } from "@/lib/ai/system-prompts";
 import { createChatTools } from "@/lib/ai/tools";
 import type { Message } from "@/components/chat/types";
+
+ 
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -15,6 +17,21 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
   const { messages, model: selectedModel, currentUrl, effort, selectedCategories, talkWithPage }: { messages: Message[]; model?: "high" | "low"; currentUrl?: string; effort?: string; selectedCategories?: string[]; talkWithPage?: boolean } = await req.json();
   const model = selectedModel === "high" ? BIG_AGENT_MODEL : selectedModel === "low" ? SMALL_AGENT_MODEL : SUB_AGENT_MODEL;
+  
+ /*// Initialize Context7 MCP client
+  let mcpClient: Awaited<ReturnType<typeof experimental_createMCPClient>>;
+  let mcpTools: Awaited<ReturnType<typeof mcpClient.tools>> = {};
+
+  try {
+
+    const transport = new SSEClientTransport(new URL('https://mcp.context7.com/mcp'));
+    mcpClient = await experimental_createMCPClient({ transport });
+    mcpTools = await mcpClient.tools();
+    console.log('Context7 MCP client initialized');
+    console.log('Context7 MCP tools:', mcpTools);
+  } catch (error) {
+    console.error('Failed to initialize Context7 MCP:', error);
+  }*/
 
   // Extract last user message for FAQ lookup
   const lastUserMessage = messages.filter(m => m.role === 'user').pop();
@@ -86,7 +103,18 @@ This information might be relevant to the user's current query. Use it if applic
       talkWithPage,
       pageContent,
     }),
-    tools: talkWithPage ? {} : createChatTools(selectedCategories),
+    onFinish: async () => {
+      console.log('Context7 MCP client closing');
+      //await mcpClient?.close();
+    },
+    onError: (error) => {
+      console.error('Error occurred', error);
+      //mcpClient?.close();
+    },
+    tools: talkWithPage ? {} : {
+      ...createChatTools(selectedCategories),
+      //...(mcpTools ?? {}),
+    },
   });
 
   return result.toUIMessageStreamResponse();

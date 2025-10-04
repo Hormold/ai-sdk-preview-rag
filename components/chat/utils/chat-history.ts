@@ -35,7 +35,7 @@ export function convertMessagesToPreview(messages: Message[]): ChatPreview["mess
 }
 
 function isSameChat(messages1: Message[], messages2: Message[]): boolean {
-  if (messages1.length !== messages2.length) return false;
+  if (!messages1 || !messages2 || messages1.length !== messages2.length) return false;
 
   return messages1.every((msg1, idx) => {
     const msg2 = messages2[idx];
@@ -60,7 +60,7 @@ export function saveChatToHistory(messages: Message[]): void {
   const history = getChatHistory();
 
   // Check if this chat already exists in history
-  const isDuplicate = history.some((chat) => isSameChat(chat.fullMessages, messages));
+  const isDuplicate = history.some((chat) => chat.fullMessages && isSameChat(chat.fullMessages, messages));
   if (isDuplicate) return;
 
   const chatPreview: ChatPreview = {
